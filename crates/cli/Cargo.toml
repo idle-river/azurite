@@ -5,3 +5,7 @@ edition = "2024"
 
 [dependencies]
 lexer = { workspace = true }
+
+[[bin]]
+name = "az"
+path = "src/main.rs"

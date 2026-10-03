@@ -50,7 +50,7 @@ pub fn tokenize(source_code: &str) -> Vec<Token> {
                     _ => Token::Identifier(identifier),
                 }
             }
-            _ => panic!("unrecognized character in source code: {}", tok),
+            _ => panic!("Unrecognized character in source code: {}", tok),
         };
 
         tokens.push(token);
