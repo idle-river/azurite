@@ -3,3 +3,4 @@ members = ["crates/*"]
 resolver = "3"
 
 [workspace.dependencies]
+lexer = { path = "./crates/lexer" }

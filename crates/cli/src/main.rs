@@ -1,3 +1,3 @@
 fn main() {
-    println!("{}", 1 + 2);
+    println!("{:#?}", lexer::tokenize("let x = 4"));
 }
