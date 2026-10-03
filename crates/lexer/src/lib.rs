@@ -80,6 +80,26 @@ mod tests {
     }
 
     #[test]
+    fn complex_token_generation() {
+        let expected = vec![
+            Token::Let,
+            Token::Identifier("y".to_string()),
+            Token::Equals,
+            Token::Number("45".to_string()),
+            Token::BinaryOperator('*'),
+            Token::OpenParen,
+            Token::Number("4".to_string()),
+            Token::BinaryOperator('/'),
+            Token::Number("3".to_string()),
+            Token::CloseParen,
+            Token::EOF,
+        ];
+        let tokens = tokenize("let y = 45 * (4/3)");
+
+        assert_eq!(expected, tokens);
+    }
+
+    #[test]
     fn eof_token() {
         let expected = vec![Token::EOF];
         let tokens = tokenize("");
