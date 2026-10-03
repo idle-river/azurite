@@ -1,3 +1,4 @@
+use parser::Parser;
 use std::{env, fs, process};
 
 fn main() {
@@ -8,7 +9,9 @@ fn main() {
             let file = &args[1];
             let contents = fs::read_to_string(file).expect("Failed to read from file");
 
-            println!("{:#?}", lexer::tokenize(&contents));
+            let mut parser = Parser::new();
+
+            println!("{:#?}", parser.produce_ast(&contents));
         }
         _ => {
             println!("Usage: {} <filename>", args[0]);
@@ -17,6 +20,35 @@ fn main() {
     }
 }
 
+macro_rules! handle_repl_error {
+    ($x: expr) => {
+        if $x.is_err() {
+            continue;
+        }
+    };
+}
+
 fn repl() {
-    unimplemented!("REPL has not been implemented yet.");
+    use std::{io, io::Write};
+    let mut parser = Parser::new();
+
+    println!("Azurite REPL v1.0");
+
+    loop {
+        print!("> ");
+        io::stdout().flush().unwrap();
+
+        let mut cmd = String::new();
+        handle_repl_error!(io::stdin().read_line(&mut cmd));
+
+        let src = cmd.trim();
+
+        if src == "exit" {
+            break;
+        }
+
+        let ast = parser.produce_ast(src);
+
+        println!("Generated AST: {:#?}", ast)
+    }
 }

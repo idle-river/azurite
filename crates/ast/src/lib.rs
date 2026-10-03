@@ -1,11 +1,16 @@
 #[derive(Debug)]
 pub struct Program {
-    body: Vec<Stmt>,
+    pub body: Vec<Stmt>,
+}
+
+impl Program {
+    pub fn new() -> Self {
+        Program { body: vec![] }
+    }
 }
 
 #[derive(Debug)]
 pub enum Stmt {
-    VariableDeclaration { name: String, initalizer: Expr },
     Expression(Expr),
 }
 

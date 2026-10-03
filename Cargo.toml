@@ -5,3 +5,4 @@ resolver = "3"
 [workspace.dependencies]
 lexer = { path = "./crates/lexer" }
 ast = { path = "./crates/ast" }
+parser = { path = "./crates/parser" }
