@@ -73,3 +73,96 @@ fn eval_numeric_binop(
 
     RuntimeValue::Number(result)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ast::BinaryOperator;
+
+    fn expression_stmt(expr: Expr) -> Stmt {
+        Stmt::Expression(expr)
+    }
+
+    fn numeric(value: f64) -> Expr {
+        Expr::NumericLiteral(value)
+    }
+
+    fn binary(left: Expr, operator: BinaryOperator, right: Expr) -> Expr {
+        Expr::Binary {
+            left: Box::new(left),
+            operator,
+            right: Box::new(right),
+        }
+    }
+
+    #[test]
+    fn returns_last_expression_value() {
+        let program = Program {
+            body: vec![expression_stmt(numeric(1.0)), expression_stmt(numeric(2.0))],
+        };
+
+        assert_eq!(evaluate(program), RuntimeValue::Number(2.0));
+    }
+
+    #[test]
+    fn evaluates_to_null_for_empty_program() {
+        let program = Program::new();
+
+        assert_eq!(evaluate(program), RuntimeValue::Null);
+    }
+
+    #[test]
+    fn evaluates_all_numeric_binary_operators() {
+        let program = Program {
+            body: vec![
+                expression_stmt(binary(numeric(6.0), BinaryOperator::Add, numeric(4.0))),
+                expression_stmt(binary(numeric(6.0), BinaryOperator::Subtract, numeric(4.0))),
+                expression_stmt(binary(numeric(6.0), BinaryOperator::Multiply, numeric(4.0))),
+                expression_stmt(binary(numeric(8.0), BinaryOperator::Divide, numeric(4.0))),
+                expression_stmt(binary(numeric(9.0), BinaryOperator::Modulo, numeric(4.0))),
+            ],
+        };
+
+        assert_eq!(evaluate(program), RuntimeValue::Number(1.0));
+    }
+
+    #[test]
+    fn null_in_binary_expression_propagates() {
+        let program = Program {
+            body: vec![expression_stmt(binary(
+                Expr::NullLiteral,
+                BinaryOperator::Add,
+                numeric(1.0),
+            ))],
+        };
+
+        assert_eq!(evaluate(program), RuntimeValue::Null);
+    }
+
+    #[test]
+    fn evaluates_nested_binary_expressions() {
+        let program = Program {
+            body: vec![expression_stmt(binary(
+                binary(numeric(2.0), BinaryOperator::Add, numeric(3.0)),
+                BinaryOperator::Multiply,
+                numeric(4.0),
+            ))],
+        };
+
+        assert_eq!(evaluate(program), RuntimeValue::Number(20.0));
+    }
+
+    #[test]
+    #[should_panic(expected = "Cannot divide by zero")]
+    fn divide_by_zero_panics() {
+        let program = Program {
+            body: vec![expression_stmt(binary(
+                numeric(10.0),
+                BinaryOperator::Divide,
+                numeric(0.0),
+            ))],
+        };
+
+        let _ = evaluate(program);
+    }
+}

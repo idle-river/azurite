@@ -7,3 +7,4 @@ lexer = { path = "./crates/lexer" }
 ast = { path = "./crates/ast" }
 parser = { path = "./crates/parser" }
 interpreter = { path = "./crates/interpreter" }
+environment = { path = "./crates/environment" }
