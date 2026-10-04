@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+interpreter = { workspace = true }
 parser = { workspace = true }
 
 [[bin]]

@@ -1,3 +1,4 @@
+use interpreter::evaluate;
 use parser::Parser;
 use std::{env, fs, process};
 
@@ -48,7 +49,9 @@ fn repl() {
         }
 
         let ast = parser.produce_ast(src);
+        let result = evaluate(ast.clone());
 
-        println!("Generated AST: {:#?}", ast)
+        println!("Generated AST: {:#?}", ast);
+        println!("Result: {:#?}", result);
     }
 }
