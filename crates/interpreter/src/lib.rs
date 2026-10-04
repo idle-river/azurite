@@ -37,6 +37,14 @@ fn eval_expr(ast_node: Expr, env: &mut Environment) -> RuntimeValue {
                 eval_numeric_binop(lhs, operator, rhs)
             }
         }
+        Expr::Assignment { assigne, value } => {
+            let Expr::Identifier(name) = *assigne else {
+                panic!("Invalid LHS inside assignment expr {:#?}", *assigne);
+            };
+
+            let result = eval_expr(*value, env);
+            env.assign_variable(name, result)
+        }
     }
 }
 

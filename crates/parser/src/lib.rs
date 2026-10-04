@@ -90,7 +90,22 @@ impl Parser {
     }
 
     fn parse_expr(&mut self) -> Expr {
-        self.parse_additive_expr()
+        self.parse_assignment_expr()
+    }
+
+    fn parse_assignment_expr(&mut self) -> Expr {
+        let left = self.parse_additive_expr();
+
+        if self.tokens.peek() == Some(&Token::Equals) {
+            self.eat();
+            let value = self.parse_assignment_expr();
+            Expr::Assignment {
+                assigne: Box::new(left),
+                value: Box::new(value),
+            }
+        } else {
+            left
+        }
     }
 
     fn parse_primary_expr(&mut self) -> Expr {

@@ -35,6 +35,11 @@ pub enum Expr {
         operator: BinaryOperator,
         right: Box<Expr>,
     },
+
+    Assignment {
+        assigne: Box<Expr>,
+        value: Box<Expr>,
+    },
 }
 
 #[derive(Debug, Clone)]
