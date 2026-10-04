@@ -9,6 +9,12 @@ impl Program {
     }
 }
 
+impl Default for Program {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Stmt {
     VariableDeclaration {

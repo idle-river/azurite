@@ -75,7 +75,7 @@ fn eval_numeric_binop(
 
 fn eval_var_declaration(var_decl: Stmt, env: &mut Environment) -> RuntimeValue {
     let Stmt::VariableDeclaration {
-        is_const: _,
+        is_const,
         ident,
         value,
     } = var_decl
@@ -85,7 +85,7 @@ fn eval_var_declaration(var_decl: Stmt, env: &mut Environment) -> RuntimeValue {
 
     let value: RuntimeValue = eval_expr(value, env);
 
-    env.declare_variable(ident, value)
+    env.declare_variable(ident, value, is_const)
 }
 
 #[cfg(test)]

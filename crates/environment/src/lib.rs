@@ -1,32 +1,33 @@
 pub mod values;
 
-use std::{collections::HashMap, panic};
+use std::{
+    collections::{HashMap, HashSet},
+    panic,
+};
 use values::RuntimeValue;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Environment {
     parent: Option<Box<Environment>>,
     variables: HashMap<String, RuntimeValue>,
+    constants: HashSet<String>,
 }
 
 #[macro_export]
 macro_rules! declare_var {
     ($env: expr, $name: expr, $value: expr) => {
-        $env.declare_variable($name.to_string(), $value);
+        $env.declare_variable($name.to_string(), $value, false);
     };
 }
 
 impl Environment {
     pub fn new(parent: Option<Environment>) -> Self {
-        let parent = if let Some(env) = parent {
-            Some(Box::new(env))
-        } else {
-            None
-        };
+        let parent = parent.map(Box::new);
 
         let mut env = Environment {
             parent,
             variables: HashMap::new(),
+            constants: HashSet::new(),
         };
 
         declare_var!(env, "true", RuntimeValue::Boolean(true));
@@ -37,7 +38,7 @@ impl Environment {
     }
 
     fn contains(&mut self, name: &str) -> bool {
-        if let Some(env) = self.resolve(&name) {
+        if let Some(env) = self.resolve(name) {
             env.variables.contains_key(name)
         } else {
             false
@@ -54,7 +55,12 @@ impl Environment {
         }
     }
 
-    pub fn declare_variable(&mut self, name: String, value: RuntimeValue) -> RuntimeValue {
+    pub fn declare_variable(
+        &mut self,
+        name: String,
+        value: RuntimeValue,
+        constant: bool,
+    ) -> RuntimeValue {
         if self.contains(&name) {
             panic!(
                 "Cannot declare variable {}; it has already been defined.",
@@ -62,7 +68,11 @@ impl Environment {
             );
         }
 
-        self.variables.insert(name, value.clone());
+        if constant {
+            self.constants.insert(name.clone());
+        }
+
+        self.variables.insert(name, value);
         value
     }
 
@@ -71,8 +81,12 @@ impl Environment {
             .resolve(&name)
             .unwrap_or_else(|| panic!("Unable to resolve variable {}", name));
 
+        if env.constants.contains(&name) {
+            panic!("Cannot reassign to variable {}; declared as constant", name);
+        }
+
         if let Some(old_val) = env.variables.get_mut(&name) {
-            *old_val = value.clone();
+            *old_val = value;
             value
         } else {
             panic!(

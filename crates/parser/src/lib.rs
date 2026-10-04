@@ -7,6 +7,12 @@ pub struct Parser {
     tokens: Peekable<std::vec::IntoIter<Token>>,
 }
 
+impl Default for Parser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 macro_rules! expect_identifer {
     ($x: expr) => {
         match $x.expect(|tok| matches!(tok, Token::Identifier(_))) {
