@@ -1,3 +1,10 @@
-let x = 4
+const foo = 45;
 
-let y = 45 * (4/3)
+const obj = {
+    x: 100,
+    y: 32,
+    foo,
+    complex: {
+        bar: true
+    },
+};

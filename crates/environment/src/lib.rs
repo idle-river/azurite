@@ -27,11 +27,17 @@ impl Environment {
     pub fn new(parent: Option<Environment>) -> Self {
         let parent = parent.map(Box::new);
 
-        let mut env = Environment {
+        let env = Environment {
             parent,
             variables: HashMap::new(),
             constants: HashSet::new(),
         };
+
+        env
+    }
+
+    pub fn global() -> Self {
+        let mut env = Self::new(None);
 
         declare_var!(env, "true", RuntimeValue::Boolean(true), true);
         declare_var!(env, "false", RuntimeValue::Boolean(false), true);

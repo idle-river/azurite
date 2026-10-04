@@ -12,8 +12,12 @@ fn main() {
             let contents = fs::read_to_string(file).expect("Failed to read from file");
 
             let mut parser = Parser::new();
+            let mut global = Environment::global();
 
-            println!("{:#?}", parser.produce_ast(&contents));
+            let ast = parser.produce_ast(&contents);
+            let result = evaluate(ast, &mut global);
+
+            println!("{:#?}", result);
         }
         _ => {
             println!("Usage: {} <filename>", args[0]);
@@ -34,7 +38,7 @@ fn repl() {
     use std::io::{self, Write};
 
     let mut parser = Parser::new();
-    let mut env = Environment::new(None);
+    let mut global = Environment::global();
 
     println!("Azurite REPL v1.0");
 
@@ -52,6 +56,6 @@ fn repl() {
         }
 
         let ast = parser.produce_ast(src);
-        println!("{}", evaluate(ast.clone(), &mut env));
+        println!("{}", evaluate(ast.clone(), &mut global));
     }
 }
