@@ -35,6 +35,19 @@ impl Parser {
         self.tokens.next().unwrap()
     }
 
+    fn expect(&mut self, expected: Token) -> Token {
+        let token = self.tokens.next().unwrap();
+
+        if token != expected {
+            panic!(
+                "Unexpected token -> {:#?} found in source code: expected {:#?}",
+                token, expected
+            );
+        }
+
+        token
+    }
+
     fn parse_stmt(&mut self) -> Stmt {
         // no other stmts beside an expr
         Stmt::Expression(self.parse_expr())
@@ -51,6 +64,11 @@ impl Parser {
         match token {
             Token::Identifier(ident) => Expr::Identifier(ident),
             Token::Number(num) => Expr::NumericLiteral(num.parse().unwrap()),
+            Token::OpenParen => {
+                let value = self.parse_expr();
+                self.expect(Token::CloseParen);
+                value
+            }
             _ => panic!("Unexpected token found during parsing: {:?}", token),
         }
     }
