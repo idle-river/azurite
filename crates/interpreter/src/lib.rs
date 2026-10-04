@@ -15,7 +15,7 @@ pub fn evaluate(program: Program, env: &mut Environment) -> RuntimeValue {
 fn eval_stmt(stmt: Stmt, env: &mut Environment) -> RuntimeValue {
     match stmt {
         Stmt::Expression(expr) => eval_expr(expr, env),
-        Stmt::VariableDeclaration { .. } => todo!(),
+        expr @ Stmt::VariableDeclaration { .. } => eval_var_declaration(expr, env),
     }
 }
 
@@ -59,10 +59,10 @@ fn eval_numeric_binop(
         Subtract => lhs - rhs,
         Multiply => lhs * rhs,
         Divide => {
-            if rhs == 0f64 {
+            if rhs == 0.0 {
                 panic!("Cannot divide by zero");
-            } else if lhs == 0f64 {
-                0f64
+            } else if lhs == 0.0 {
+                0.0
             } else {
                 lhs / rhs
             }
@@ -71,6 +71,21 @@ fn eval_numeric_binop(
     };
 
     RuntimeValue::Number(result)
+}
+
+fn eval_var_declaration(var_decl: Stmt, env: &mut Environment) -> RuntimeValue {
+    let Stmt::VariableDeclaration {
+        is_const: _,
+        ident,
+        value,
+    } = var_decl
+    else {
+        unreachable!();
+    };
+
+    let value: RuntimeValue = eval_expr(value, env);
+
+    env.declare_variable(ident, value)
 }
 
 #[cfg(test)]

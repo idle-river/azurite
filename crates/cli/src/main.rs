@@ -37,11 +37,6 @@ fn repl() {
     let mut parser = Parser::new();
     let mut env = Environment::new(None);
 
-    // Hardcoded Variables
-    declare_var!(env, "x", RuntimeValue::Number(100.0));
-    declare_var!(env, "y", RuntimeValue::Number(150.0));
-    declare_var!(env, "z", RuntimeValue::Number(200.0));
-
     println!("Azurite REPL v1.0");
 
     loop {
