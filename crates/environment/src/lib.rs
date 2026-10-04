@@ -110,6 +110,7 @@ mod tests {
 
     fn env_with_vars(parent: Option<Environment>, vars: &[(&str, RuntimeValue)]) -> Environment {
         let mut variables = HashMap::new();
+        let constants = HashSet::new();
         for (name, value) in vars {
             variables.insert((*name).to_string(), value.clone());
         }
@@ -117,6 +118,7 @@ mod tests {
         Environment {
             parent: parent.map(Box::new),
             variables,
+            constants,
         }
     }
 
@@ -187,7 +189,7 @@ mod tests {
     fn declare_variable_adds_new_identifier() {
         let mut env = Environment::new(None);
 
-        let declared = env.declare_variable("y".to_string(), RuntimeValue::Number(3.0));
+        let declared = env.declare_variable("y".to_string(), RuntimeValue::Number(3.0), false);
 
         assert_eq!(declared, RuntimeValue::Number(3.0));
         assert_eq!(env.lookup("y"), &RuntimeValue::Number(3.0));
