@@ -18,6 +18,9 @@ macro_rules! declare_var {
     ($env: expr, $name: expr, $value: expr) => {
         $env.declare_variable($name.to_string(), $value, false);
     };
+    ($env: expr, $name: expr, $value: expr, $is_constant: expr) => {
+        $env.declare_variable($name.to_string(), $value, $is_constant);
+    };
 }
 
 impl Environment {
@@ -30,9 +33,9 @@ impl Environment {
             constants: HashSet::new(),
         };
 
-        declare_var!(env, "true", RuntimeValue::Boolean(true));
-        declare_var!(env, "false", RuntimeValue::Boolean(false));
-        declare_var!(env, "null", RuntimeValue::Null);
+        declare_var!(env, "true", RuntimeValue::Boolean(true), true);
+        declare_var!(env, "false", RuntimeValue::Boolean(false), true);
+        declare_var!(env, "null", RuntimeValue::Null, true);
 
         env
     }
