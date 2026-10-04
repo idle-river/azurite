@@ -15,6 +15,7 @@ pub fn evaluate(program: Program, env: &mut Environment) -> RuntimeValue {
 fn eval_stmt(stmt: Stmt, env: &mut Environment) -> RuntimeValue {
     match stmt {
         Stmt::Expression(expr) => eval_expr(expr, env),
+        Stmt::VariableDeclaration { .. } => todo!(),
     }
 }
 

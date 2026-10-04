@@ -11,6 +11,11 @@ impl Program {
 
 #[derive(Debug, Clone)]
 pub enum Stmt {
+    VariableDeclaration {
+        is_const: bool,
+        ident: String,
+        value: Expr,
+    },
     Expression(Expr),
 }
 

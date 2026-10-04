@@ -7,6 +7,15 @@ pub struct Parser {
     tokens: Peekable<std::vec::IntoIter<Token>>,
 }
 
+macro_rules! expect_identifer {
+    ($x: expr) => {
+        match $x.expect(|tok| matches!(tok, Token::Identifier(_))) {
+            Token::Identifier(name) => name,
+            _ => unreachable!(),
+        }
+    };
+}
+
 impl Parser {
     pub fn new() -> Self {
         Parser {
@@ -35,26 +44,46 @@ impl Parser {
         self.tokens.next().unwrap()
     }
 
-    fn expect(&mut self, expected: Token) -> Token {
-        let token = self.tokens.next().unwrap();
+    fn expect<F>(&mut self, predicate: F) -> Token
+    where
+        F: FnOnce(&Token) -> bool,
+    {
+        let token = self.eat();
 
-        if token != expected {
-            panic!(
-                "Unexpected token -> {:#?} found in source code: expected {:#?}",
-                token, expected
-            );
+        if predicate(&token) {
+            token
+        } else {
+            panic!("Unexpected token: {:?}", token);
         }
-
-        token
     }
 
     fn parse_stmt(&mut self) -> Stmt {
-        // no other stmts beside an expr
-        Stmt::Expression(self.parse_expr())
+        let tok = self.tokens.peek().unwrap();
+
+        match tok {
+            Token::Let | Token::Const => self.parse_var_decl(),
+            _ => Stmt::Expression(self.parse_expr()),
+        }
+    }
+
+    fn parse_var_decl(&mut self) -> Stmt {
+        let token = self.eat();
+
+        let is_const = token == Token::Const;
+        let ident = expect_identifer!(self);
+
+        self.expect(|tok| tok == &Token::Equals);
+        let dec = Stmt::VariableDeclaration {
+            is_const,
+            ident,
+            value: self.parse_expr(),
+        };
+
+        self.expect(|tok| tok == &Token::SemiColon);
+        dec
     }
 
     fn parse_expr(&mut self) -> Expr {
-        // just implementing additive exprs
         self.parse_additive_expr()
     }
 
@@ -66,7 +95,7 @@ impl Parser {
             Token::Number(num) => Expr::NumericLiteral(num.parse().unwrap()),
             Token::OpenParen => {
                 let value = self.parse_expr();
-                self.expect(Token::CloseParen);
+                self.expect(|tok| tok == &Token::CloseParen);
                 value
             }
             _ => panic!("Unexpected token found during parsing: {:?}", token),

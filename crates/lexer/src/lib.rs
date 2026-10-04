@@ -4,10 +4,12 @@ pub enum Token {
     Identifier(String),
     Equals,
     Let,
+    Const,
     OpenParen,
     CloseParen,
     BinaryOperator(char),
     EOF,
+    SemiColon,
 }
 
 pub fn tokenize(source_code: &str) -> Vec<Token> {
@@ -21,6 +23,7 @@ pub fn tokenize(source_code: &str) -> Vec<Token> {
             ')' => Token::CloseParen,
             '+' | '-' | '*' | '/' | '%' => Token::BinaryOperator(tok),
             '=' => Token::Equals,
+            ';' => Token::SemiColon,
             c if c.is_ascii_digit() => {
                 let mut number = String::from(c);
 
@@ -47,6 +50,7 @@ pub fn tokenize(source_code: &str) -> Vec<Token> {
 
                 match identifier.as_str() {
                     "let" => Token::Let,
+                    "const" => Token::Const,
                     _ => Token::Identifier(identifier),
                 }
             }
@@ -72,9 +76,10 @@ mod tests {
             Token::Identifier("x".to_string()),
             Token::Equals,
             Token::Number("4".to_string()),
+            Token::SemiColon,
             Token::EOF,
         ];
-        let tokens = tokenize("let x = 4");
+        let tokens = tokenize("let x = 4;");
 
         assert_eq!(tokens, expected);
     }
@@ -92,9 +97,10 @@ mod tests {
             Token::BinaryOperator('/'),
             Token::Number("3".to_string()),
             Token::CloseParen,
+            Token::SemiColon,
             Token::EOF,
         ];
-        let tokens = tokenize("let y = 45 * (4/3)");
+        let tokens = tokenize("let y = 45 * (4/3);");
 
         assert_eq!(expected, tokens);
     }
