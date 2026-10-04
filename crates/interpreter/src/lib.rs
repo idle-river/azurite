@@ -1,35 +1,35 @@
-pub mod values;
-
 use ast::{Expr, Program, Stmt};
-use values::RuntimeValue;
+use environment::Environment;
+use environment::values::RuntimeValue;
 
-pub fn evaluate(program: Program) -> RuntimeValue {
+pub fn evaluate(program: Program, env: &mut Environment) -> RuntimeValue {
     let mut last_value = RuntimeValue::Null;
 
     for stmt in program.body {
-        last_value = eval_stmt(stmt);
+        last_value = eval_stmt(stmt, env);
     }
 
     last_value
 }
 
-fn eval_stmt(stmt: Stmt) -> RuntimeValue {
+fn eval_stmt(stmt: Stmt, env: &mut Environment) -> RuntimeValue {
     match stmt {
-        Stmt::Expression(expr) => eval_expr(expr),
+        Stmt::Expression(expr) => eval_expr(expr, env),
     }
 }
 
-fn eval_expr(ast_node: Expr) -> RuntimeValue {
+fn eval_expr(ast_node: Expr, env: &mut Environment) -> RuntimeValue {
     match ast_node {
         Expr::NumericLiteral(num) => RuntimeValue::Number(num),
         Expr::NullLiteral => RuntimeValue::Null,
+        Expr::Identifier(ident) => *env.lookup(&ident),
         Expr::Binary {
             left,
             operator,
             right,
         } => {
-            let lhs = eval_expr(*left);
-            let rhs = eval_expr(*right);
+            let lhs = eval_expr(*left, env);
+            let rhs = eval_expr(*right, env);
 
             if lhs == RuntimeValue::Null || rhs == RuntimeValue::Null {
                 RuntimeValue::Null
@@ -37,7 +37,6 @@ fn eval_expr(ast_node: Expr) -> RuntimeValue {
                 eval_numeric_binop(lhs, operator, rhs)
             }
         }
-        _ => unimplemented!("AST Node has not been implemented for the interpreter yet"),
     }
 }
 
@@ -78,6 +77,8 @@ fn eval_numeric_binop(
 mod tests {
     use super::*;
     use ast::BinaryOperator;
+    use environment::Environment;
+    use environment::values::RuntimeValue;
 
     fn expression_stmt(expr: Expr) -> Stmt {
         Stmt::Expression(expr)
@@ -95,20 +96,25 @@ mod tests {
         }
     }
 
+    fn evaluate_program(program: Program) -> RuntimeValue {
+        let mut env = Environment::new(None);
+        evaluate(program, &mut env)
+    }
+
     #[test]
     fn returns_last_expression_value() {
         let program = Program {
             body: vec![expression_stmt(numeric(1.0)), expression_stmt(numeric(2.0))],
         };
 
-        assert_eq!(evaluate(program), RuntimeValue::Number(2.0));
+        assert_eq!(evaluate_program(program), RuntimeValue::Number(2.0));
     }
 
     #[test]
     fn evaluates_to_null_for_empty_program() {
         let program = Program::new();
 
-        assert_eq!(evaluate(program), RuntimeValue::Null);
+        assert_eq!(evaluate_program(program), RuntimeValue::Null);
     }
 
     #[test]
@@ -123,7 +129,7 @@ mod tests {
             ],
         };
 
-        assert_eq!(evaluate(program), RuntimeValue::Number(1.0));
+        assert_eq!(evaluate_program(program), RuntimeValue::Number(1.0));
     }
 
     #[test]
@@ -136,7 +142,7 @@ mod tests {
             ))],
         };
 
-        assert_eq!(evaluate(program), RuntimeValue::Null);
+        assert_eq!(evaluate_program(program), RuntimeValue::Null);
     }
 
     #[test]
@@ -149,7 +155,7 @@ mod tests {
             ))],
         };
 
-        assert_eq!(evaluate(program), RuntimeValue::Number(20.0));
+        assert_eq!(evaluate_program(program), RuntimeValue::Number(20.0));
     }
 
     #[test]
@@ -163,6 +169,6 @@ mod tests {
             ))],
         };
 
-        let _ = evaluate(program);
+        let _ = evaluate_program(program);
     }
 }

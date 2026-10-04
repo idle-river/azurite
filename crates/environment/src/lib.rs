@@ -1,7 +1,9 @@
-use interpreter::values::RuntimeValue;
-use std::collections::HashMap;
+pub mod values;
 
-#[derive(Debug, Clone)]
+use std::{collections::HashMap, panic};
+use values::RuntimeValue;
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Environment {
     parent: Option<Box<Environment>>,
     variables: HashMap<String, RuntimeValue>,
@@ -22,16 +24,20 @@ impl Environment {
     }
 
     fn contains(&mut self, name: &str) -> bool {
-        self.resolve(&name).variables.contains_key(name)
+        if let Some(env) = self.resolve(&name) {
+            env.variables.contains_key(name)
+        } else {
+            false
+        }
     }
 
-    pub fn resolve(&mut self, name: &str) -> &mut Environment {
+    pub fn resolve(&mut self, name: &str) -> Option<&mut Environment> {
         if self.variables.contains_key(name) {
-            self
+            Some(self)
         } else if let Some(parent) = &mut self.parent {
             parent.resolve(name)
         } else {
-            panic!("Unable to resolve variable {}", name);
+            None
         }
     }
 
@@ -43,11 +49,14 @@ impl Environment {
             );
         }
 
-        self.variables.insert(name, value.clone()).unwrap()
+        self.variables.insert(name, value.clone());
+        value
     }
 
     pub fn assign_variable(&mut self, name: String, value: RuntimeValue) -> RuntimeValue {
-        let env = &mut self.resolve(&name);
+        let env = &mut self
+            .resolve(&name)
+            .unwrap_or_else(|| panic!("Unable to resolve variable {}", name));
 
         if let Some(old_val) = env.variables.get_mut(&name) {
             *old_val = value.clone();
@@ -61,7 +70,9 @@ impl Environment {
     }
 
     pub fn lookup(&mut self, name: &str) -> &RuntimeValue {
-        let env = self.resolve(name);
+        let env = self
+            .resolve(name)
+            .unwrap_or_else(|| panic!("Unable to resolve variable {}", name));
         env.variables.get(name).unwrap()
     }
 }
@@ -94,7 +105,9 @@ mod tests {
     fn resolve_finds_variable_in_current_environment() {
         let mut env = env_with_vars(None, &[("x", RuntimeValue::Number(10.0))]);
 
-        let resolved = env.resolve("x");
+        let resolved = env
+            .resolve("x")
+            .expect("x should resolve in current environment");
 
         assert!(resolved.variables.contains_key("x"));
     }
@@ -104,7 +117,9 @@ mod tests {
         let parent = env_with_vars(None, &[("x", RuntimeValue::Number(42.0))]);
         let mut child = env_with_vars(Some(parent), &[]);
 
-        let resolved = child.resolve("x");
+        let resolved = child
+            .resolve("x")
+            .expect("x should resolve in parent environment");
 
         assert!(resolved.variables.contains_key("x"));
         assert_eq!(
@@ -114,11 +129,12 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Unable to resolve variable missing")]
-    fn resolve_panics_for_unknown_variable() {
+    fn resolve_returns_none_for_unknown_variable() {
         let mut env = Environment::new(None);
 
-        let _ = env.resolve("missing");
+        let resolved = env.resolve("missing");
+
+        assert!(resolved.is_none());
     }
 
     #[test]
@@ -133,11 +149,13 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Unable to resolve variable y")]
-    fn declare_variable_panics_for_new_identifier() {
+    fn declare_variable_adds_new_identifier() {
         let mut env = Environment::new(None);
 
-        let _ = env.declare_variable("y".to_string(), RuntimeValue::Number(3.0));
+        let declared = env.declare_variable("y".to_string(), RuntimeValue::Number(3.0));
+
+        assert_eq!(declared, RuntimeValue::Number(3.0));
+        assert_eq!(env.lookup("y"), &RuntimeValue::Number(3.0));
     }
 
     #[test]

@@ -1,3 +1,4 @@
+use environment::Environment;
 use interpreter::evaluate;
 use parser::Parser;
 use std::{env, fs, process};
@@ -29,9 +30,22 @@ macro_rules! handle_repl_error {
     };
 }
 
+macro_rules! declare_var {
+    ($env: expr, $name: expr, $value: expr) => {
+        $env.declare_variable($name.to_string(), $value);
+    };
+}
+
 fn repl() {
+    use environment::values::RuntimeValue;
     use std::{io, io::Write};
     let mut parser = Parser::new();
+    let mut env = Environment::new(None);
+
+    // Hardcoded Variables
+    declare_var!(env, "x", RuntimeValue::Number(100.0));
+    declare_var!(env, "y", RuntimeValue::Number(150.0));
+    declare_var!(env, "z", RuntimeValue::Number(200.0));
 
     println!("Azurite REPL v1.0");
 
@@ -49,7 +63,7 @@ fn repl() {
         }
 
         let ast = parser.produce_ast(src);
-        let result = evaluate(ast.clone());
+        let result = evaluate(ast.clone(), &mut env);
 
         println!("Generated AST: {:#?}", ast);
         println!("Result: {:#?}", result);

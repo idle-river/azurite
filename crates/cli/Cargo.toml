@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 interpreter = { workspace = true }
 parser = { workspace = true }
+environment = { workspace = true }
 
 [[bin]]
 name = "az"

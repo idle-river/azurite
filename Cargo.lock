@@ -10,6 +10,7 @@ version = "0.1.0"
 name = "cli"
 version = "0.1.0"
 dependencies = [
+ "environment",
  "interpreter",
  "parser",
 ]
@@ -17,15 +18,13 @@ dependencies = [
 [[package]]
 name = "environment"
 version = "0.1.0"
-dependencies = [
- "interpreter",
-]
 
 [[package]]
 name = "interpreter"
 version = "0.1.0"
 dependencies = [
  "ast",
+ "environment",
 ]
 
 [[package]]
