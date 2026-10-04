@@ -122,3 +122,206 @@ impl Parser {
 // FunctionCall
 // MemberExpr
 // AssignmentExpr
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_numeric_literal_statement() {
+        let mut parser = Parser::new();
+        let program = parser.produce_ast("42");
+
+        assert_eq!(program.body.len(), 1);
+
+        match &program.body[0] {
+            Stmt::Expression(Expr::NumericLiteral(value)) => assert_eq!(*value, 42.0),
+            other => panic!("expected numeric literal expression, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn parses_identifier_statement() {
+        let mut parser = Parser::new();
+        let program = parser.produce_ast("my_value");
+
+        assert_eq!(program.body.len(), 1);
+
+        match &program.body[0] {
+            Stmt::Expression(Expr::Identifier(ident)) => assert_eq!(ident, "my_value"),
+            other => panic!("expected identifier expression, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn multiplicative_has_higher_precedence_than_additive() {
+        let mut parser = Parser::new();
+        let program = parser.produce_ast("2 + 3 * 4");
+
+        match &program.body[0] {
+            Stmt::Expression(Expr::Binary {
+                left,
+                operator: BinaryOperator::Add,
+                right,
+            }) => {
+                match left.as_ref() {
+                    Expr::NumericLiteral(value) => assert_eq!(*value, 2.0),
+                    other => panic!("expected left numeric literal, got: {:?}", other),
+                }
+
+                match right.as_ref() {
+                    Expr::Binary {
+                        left,
+                        operator: BinaryOperator::Multiply,
+                        right,
+                    } => {
+                        match left.as_ref() {
+                            Expr::NumericLiteral(value) => assert_eq!(*value, 3.0),
+                            other => {
+                                panic!("expected right-left numeric literal, got: {:?}", other)
+                            }
+                        }
+                        match right.as_ref() {
+                            Expr::NumericLiteral(value) => assert_eq!(*value, 4.0),
+                            other => {
+                                panic!("expected right-right numeric literal, got: {:?}", other)
+                            }
+                        }
+                    }
+                    other => panic!("expected multiplication on right side, got: {:?}", other),
+                }
+            }
+            other => panic!("expected additive binary expression, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn parentheses_override_precedence() {
+        let mut parser = Parser::new();
+        let program = parser.produce_ast("(2 + 3) * 4");
+
+        match &program.body[0] {
+            Stmt::Expression(Expr::Binary {
+                left,
+                operator: BinaryOperator::Multiply,
+                right,
+            }) => {
+                match left.as_ref() {
+                    Expr::Binary {
+                        left,
+                        operator: BinaryOperator::Add,
+                        right,
+                    } => {
+                        match left.as_ref() {
+                            Expr::NumericLiteral(value) => assert_eq!(*value, 2.0),
+                            other => panic!("expected left-left numeric literal, got: {:?}", other),
+                        }
+                        match right.as_ref() {
+                            Expr::NumericLiteral(value) => assert_eq!(*value, 3.0),
+                            other => {
+                                panic!("expected left-right numeric literal, got: {:?}", other)
+                            }
+                        }
+                    }
+                    other => panic!(
+                        "expected additive expression inside parentheses, got: {:?}",
+                        other
+                    ),
+                }
+
+                match right.as_ref() {
+                    Expr::NumericLiteral(value) => assert_eq!(*value, 4.0),
+                    other => panic!("expected right numeric literal, got: {:?}", other),
+                }
+            }
+            other => panic!(
+                "expected multiplicative binary expression, got: {:?}",
+                other
+            ),
+        }
+    }
+
+    #[test]
+    fn additive_is_left_associative() {
+        let mut parser = Parser::new();
+        let program = parser.produce_ast("10 - 3 - 2");
+
+        match &program.body[0] {
+            Stmt::Expression(Expr::Binary {
+                left,
+                operator: BinaryOperator::Subtract,
+                right,
+            }) => {
+                match left.as_ref() {
+                    Expr::Binary {
+                        left,
+                        operator: BinaryOperator::Subtract,
+                        right,
+                    } => {
+                        match left.as_ref() {
+                            Expr::NumericLiteral(value) => assert_eq!(*value, 10.0),
+                            other => panic!("expected first numeric literal, got: {:?}", other),
+                        }
+                        match right.as_ref() {
+                            Expr::NumericLiteral(value) => assert_eq!(*value, 3.0),
+                            other => panic!("expected second numeric literal, got: {:?}", other),
+                        }
+                    }
+                    other => panic!("expected left-associated subtraction, got: {:?}", other),
+                }
+
+                match right.as_ref() {
+                    Expr::NumericLiteral(value) => assert_eq!(*value, 2.0),
+                    other => panic!("expected final numeric literal, got: {:?}", other),
+                }
+            }
+            other => panic!("expected subtraction expression, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn parses_multiple_expression_statements() {
+        let mut parser = Parser::new();
+        let program = parser.produce_ast("1 2");
+
+        assert_eq!(program.body.len(), 2);
+    }
+
+    #[test]
+    fn multiplicative_is_left_associative() {
+        let mut parser = Parser::new();
+        let program = parser.produce_ast("20 / 5 / 2");
+
+        match &program.body[0] {
+            Stmt::Expression(Expr::Binary {
+                left,
+                operator: BinaryOperator::Divide,
+                right,
+            }) => {
+                match left.as_ref() {
+                    Expr::Binary {
+                        left,
+                        operator: BinaryOperator::Divide,
+                        right,
+                    } => {
+                        match left.as_ref() {
+                            Expr::NumericLiteral(value) => assert_eq!(*value, 20.0),
+                            other => panic!("expected first numeric literal, got: {:?}", other),
+                        }
+                        match right.as_ref() {
+                            Expr::NumericLiteral(value) => assert_eq!(*value, 5.0),
+                            other => panic!("expected second numeric literal, got: {:?}", other),
+                        }
+                    }
+                    other => panic!("expected left-associated division, got: {:?}", other),
+                }
+
+                match right.as_ref() {
+                    Expr::NumericLiteral(value) => assert_eq!(*value, 2.0),
+                    other => panic!("expected final numeric literal, got: {:?}", other),
+                }
+            }
+            other => panic!("expected division expression, got: {:?}", other),
+        }
+    }
+}
