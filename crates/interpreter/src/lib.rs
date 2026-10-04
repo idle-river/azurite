@@ -151,7 +151,7 @@ mod tests {
     fn null_in_binary_expression_propagates() {
         let program = Program {
             body: vec![expression_stmt(binary(
-                Expr::NullLiteral,
+                Expr::Identifier("null".to_string()),
                 BinaryOperator::Add,
                 numeric(1.0),
             ))],

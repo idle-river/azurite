@@ -107,11 +107,19 @@ mod tests {
     }
 
     #[test]
-    fn new_creates_empty_environment_without_parent() {
+    fn new_creates_environment_with_default_globals_and_no_parent() {
         let env = Environment::new(None);
 
         assert!(env.parent.is_none());
-        assert!(env.variables.is_empty());
+        assert_eq!(
+            env.variables.get("true"),
+            Some(&RuntimeValue::Boolean(true))
+        );
+        assert_eq!(
+            env.variables.get("false"),
+            Some(&RuntimeValue::Boolean(false))
+        );
+        assert_eq!(env.variables.get("null"), Some(&RuntimeValue::Null));
     }
 
     #[test]
