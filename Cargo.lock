@@ -17,6 +17,9 @@ dependencies = [
 [[package]]
 name = "environment"
 version = "0.1.0"
+dependencies = [
+ "interpreter",
+]
 
 [[package]]
 name = "interpreter"
