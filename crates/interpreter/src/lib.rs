@@ -21,7 +21,6 @@ fn eval_stmt(stmt: Stmt, env: &mut Environment) -> RuntimeValue {
 fn eval_expr(ast_node: Expr, env: &mut Environment) -> RuntimeValue {
     match ast_node {
         Expr::NumericLiteral(num) => RuntimeValue::Number(num),
-        Expr::NullLiteral => RuntimeValue::Null,
         Expr::Identifier(ident) => *env.lookup(&ident),
         Expr::Binary {
             left,
@@ -48,10 +47,10 @@ fn eval_numeric_binop(
     use ast::BinaryOperator::*;
 
     let RuntimeValue::Number(lhs) = lhs else {
-        unreachable!()
+        return RuntimeValue::Null;
     };
     let RuntimeValue::Number(rhs) = rhs else {
-        unreachable!()
+        return RuntimeValue::Null;
     };
 
     let result = match operator {

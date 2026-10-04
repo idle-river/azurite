@@ -30,13 +30,8 @@ macro_rules! handle_repl_error {
     };
 }
 
-macro_rules! declare_var {
-    ($env: expr, $name: expr, $value: expr) => {
-        $env.declare_variable($name.to_string(), $value);
-    };
-}
-
 fn repl() {
+    use environment::declare_var;
     use environment::values::RuntimeValue;
     use std::{io, io::Write};
     let mut parser = Parser::new();

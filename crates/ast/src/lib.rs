@@ -18,7 +18,6 @@ pub enum Stmt {
 pub enum Expr {
     NumericLiteral(f64),
     Identifier(String),
-    NullLiteral,
 
     Binary {
         left: Box<Expr>,

@@ -8,7 +8,6 @@ pub enum Token {
     CloseParen,
     BinaryOperator(char),
     EOF,
-    Null,
 }
 
 pub fn tokenize(source_code: &str) -> Vec<Token> {
@@ -48,7 +47,6 @@ pub fn tokenize(source_code: &str) -> Vec<Token> {
 
                 match identifier.as_str() {
                     "let" => Token::Let,
-                    "null" => Token::Null,
                     _ => Token::Identifier(identifier),
                 }
             }

@@ -9,6 +9,13 @@ pub struct Environment {
     variables: HashMap<String, RuntimeValue>,
 }
 
+#[macro_export]
+macro_rules! declare_var {
+    ($env: expr, $name: expr, $value: expr) => {
+        $env.declare_variable($name.to_string(), $value);
+    };
+}
+
 impl Environment {
     pub fn new(parent: Option<Environment>) -> Self {
         let parent = if let Some(env) = parent {
@@ -17,10 +24,16 @@ impl Environment {
             None
         };
 
-        Environment {
+        let mut env = Environment {
             parent,
             variables: HashMap::new(),
-        }
+        };
+
+        declare_var!(env, "true", RuntimeValue::Boolean(true));
+        declare_var!(env, "false", RuntimeValue::Boolean(false));
+        declare_var!(env, "null", RuntimeValue::Null);
+
+        env
     }
 
     fn contains(&mut self, name: &str) -> bool {

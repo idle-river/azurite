@@ -69,7 +69,6 @@ impl Parser {
                 self.expect(Token::CloseParen);
                 value
             }
-            Token::Null => Expr::NullLiteral,
             _ => panic!("Unexpected token found during parsing: {:?}", token),
         }
     }
