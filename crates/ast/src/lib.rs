@@ -34,3 +34,16 @@ pub enum BinaryOperator {
     Divide,
     Modulo,
 }
+
+impl BinaryOperator {
+    pub fn new(op: char) -> Self {
+        match op {
+            '+' => BinaryOperator::Add,
+            '-' => BinaryOperator::Subtract,
+            '*' => BinaryOperator::Multiply,
+            '/' => BinaryOperator::Divide,
+            '%' => BinaryOperator::Modulo,
+            _ => panic!("not a binary operator"),
+        }
+    }
+}

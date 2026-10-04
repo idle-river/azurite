@@ -1,23 +1,23 @@
-use std::collections::VecDeque;
+use std::iter::Peekable;
 
-use ast::{Expr, Program, Stmt};
+use ast::{BinaryOperator, Expr, Program, Stmt};
 use lexer::{Token, tokenize};
 
 pub struct Parser {
-    tokens: VecDeque<Token>,
+    tokens: Peekable<std::vec::IntoIter<Token>>,
 }
 
 impl Parser {
     pub fn new() -> Self {
         Parser {
-            tokens: VecDeque::new(),
+            tokens: vec![].into_iter().peekable(),
         }
     }
 
     pub fn produce_ast(&mut self, source_code: &str) -> Program {
         let mut program = Program::new();
 
-        self.tokens = VecDeque::from(tokenize(source_code));
+        self.tokens = tokenize(source_code).into_iter().peekable();
 
         // Parse til end of file
         while self.not_eof() {
@@ -27,12 +27,12 @@ impl Parser {
         program
     }
 
-    fn not_eof(&self) -> bool {
-        self.tokens[0] != Token::EOF
+    fn not_eof(&mut self) -> bool {
+        self.tokens.peek().unwrap() != &Token::EOF
     }
 
     fn eat(&mut self) -> Token {
-        self.tokens.pop_front().unwrap()
+        self.tokens.next().unwrap()
     }
 
     fn parse_stmt(&mut self) -> Stmt {
@@ -41,8 +41,8 @@ impl Parser {
     }
 
     fn parse_expr(&mut self) -> Expr {
-        // just implementing primary exprs first
-        self.parse_primary_expr()
+        // just implementing additive exprs
+        self.parse_additive_expr()
     }
 
     fn parse_primary_expr(&mut self) -> Expr {
@@ -54,4 +54,53 @@ impl Parser {
             _ => panic!("Unexpected token found during parsing: {:?}", token),
         }
     }
+
+    fn parse_additive_expr(&mut self) -> Expr {
+        let mut left = self.parse_multiplictive_expr();
+
+        while let Some(Token::BinaryOperator(op @ ('+' | '-'))) = self.tokens.peek() {
+            let op = *op;
+            self.eat();
+
+            let right = self.parse_multiplictive_expr();
+
+            left = Expr::Binary {
+                left: Box::new(left),
+                operator: BinaryOperator::new(op),
+                right: Box::new(right),
+            };
+        }
+
+        left
+    }
+
+    fn parse_multiplictive_expr(&mut self) -> Expr {
+        let mut left = self.parse_primary_expr();
+
+        while let Some(Token::BinaryOperator(op @ ('*' | '/' | '%'))) = self.tokens.peek() {
+            let op = *op;
+            self.eat();
+
+            let right = self.parse_primary_expr();
+
+            left = Expr::Binary {
+                left: Box::new(left),
+                operator: BinaryOperator::new(op),
+                right: Box::new(right),
+            };
+        }
+
+        left
+    }
 }
+
+// Orders of Prescidence (High -> Low)
+// PrimaryExpr
+// UnaryExpr
+// MultiplicitiveExpr
+// AdditiveExpr
+// ComparisonExpr
+// LogicalExpr
+// FunctionCall
+// MemberExpr
+// AssignmentExpr
