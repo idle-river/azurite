@@ -31,16 +31,15 @@ macro_rules! handle_repl_error {
 }
 
 fn repl() {
-    use environment::declare_var;
-    use environment::values::RuntimeValue;
-    use std::{io, io::Write};
+    use std::io::{self, Write};
+
     let mut parser = Parser::new();
     let mut env = Environment::new(None);
 
     println!("Azurite REPL v1.0");
 
     loop {
-        print!("> ");
+        print!(">>> ");
         io::stdout().flush().unwrap();
 
         let mut cmd = String::new();
@@ -53,9 +52,6 @@ fn repl() {
         }
 
         let ast = parser.produce_ast(src);
-        let result = evaluate(ast.clone(), &mut env);
-
-        println!("Generated AST: {:#?}", ast);
-        println!("Result: {:#?}", result);
+        println!("{}", evaluate(ast.clone(), &mut env));
     }
 }
