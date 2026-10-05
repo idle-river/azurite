@@ -124,7 +124,7 @@ mod tests {
     }
 
     fn evaluate_program(program: Program) -> RuntimeValue {
-        let mut env = Environment::new(None);
+        let mut env = Environment::global();
         evaluate(program, &mut env)
     }
 

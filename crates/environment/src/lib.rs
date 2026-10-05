@@ -133,7 +133,7 @@ mod tests {
 
     #[test]
     fn new_creates_environment_with_default_globals_and_no_parent() {
-        let env = Environment::new(None);
+        let env = Environment::global();
 
         assert!(env.parent.is_none());
         assert_eq!(
