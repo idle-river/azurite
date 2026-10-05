@@ -29,6 +29,11 @@ pub enum Stmt {
 pub enum Expr {
     NumericLiteral(f64),
     Identifier(String),
+    Property {
+        key: String,
+        value: Option<Box<Expr>>,
+    },
+    Object(Vec<Box<Expr>>),
 
     Binary {
         left: Box<Expr>,

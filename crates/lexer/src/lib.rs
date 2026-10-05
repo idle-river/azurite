@@ -7,9 +7,13 @@ pub enum Token {
     Const,
     OpenParen,
     CloseParen,
+    OpenBrace,
+    CloseBrace,
     BinaryOperator(char),
     EOF,
     SemiColon,
+    Comma,
+    Colon,
 }
 
 pub fn tokenize(source_code: &str) -> Vec<Token> {
@@ -37,6 +41,10 @@ pub fn tokenize(source_code: &str) -> Vec<Token> {
 
                 Token::Number(number)
             }
+            ':' => Token::Colon,
+            ',' => Token::Comma,
+            '{' => Token::OpenBrace,
+            '}' => Token::CloseBrace,
             c if c.is_ascii_alphabetic() || c == '_' => {
                 let mut identifier = String::from(c);
 

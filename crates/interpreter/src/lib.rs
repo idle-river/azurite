@@ -45,6 +45,10 @@ fn eval_expr(ast_node: Expr, env: &mut Environment) -> RuntimeValue {
             let result = eval_expr(*value, env);
             env.assign_variable(name, result)
         }
+        _ => {
+            println!("AST Node: {:#?}", ast_node);
+            unimplemented!("This AST node has not been setup.");
+        }
     }
 }
 

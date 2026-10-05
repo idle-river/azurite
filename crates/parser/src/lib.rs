@@ -93,8 +93,51 @@ impl Parser {
         self.parse_assignment_expr()
     }
 
+    fn parse_object_expr(&mut self) -> Expr {
+        // { x: 100 }
+        if self.tokens.peek() != Some(&Token::OpenBrace) {
+            return self.parse_additive_expr();
+        }
+
+        self.eat(); // advanced past openbrace
+
+        let mut properties = Vec::<Box<Expr>>::new();
+
+        while self.not_eof() && self.tokens.peek() != Some(&Token::CloseBrace) {
+            // { x: 100 }
+            // { x: 100, }
+            let key = expect_identifer!(self);
+
+            // { x, }
+            if self.tokens.peek() == Some(&Token::Comma) {
+                self.eat(); // advance past comma
+                properties.push(Box::new(Expr::Property { key, value: None }));
+                continue;
+            // { x }
+            } else if self.tokens.peek() == Some(&Token::CloseBrace) {
+                properties.push(Box::new(Expr::Property { key, value: None }));
+                continue;
+            }
+
+            self.expect(|tok| tok == &Token::Colon);
+            let value = Box::new(self.parse_expr());
+
+            properties.push(Box::new(Expr::Property {
+                key,
+                value: Some(value),
+            }));
+
+            if self.tokens.peek() != Some(&Token::CloseBrace) {
+                self.expect(|tok| tok == &Token::Comma);
+            }
+        }
+
+        self.expect(|tok| tok == &Token::CloseBrace);
+        Expr::Object(properties)
+    }
+
     fn parse_assignment_expr(&mut self) -> Expr {
-        let left = self.parse_additive_expr();
+        let left = self.parse_object_expr();
 
         if self.tokens.peek() == Some(&Token::Equals) {
             self.eat();
@@ -372,6 +415,29 @@ mod tests {
                 }
             }
             other => panic!("expected division expression, got: {:?}", other),
+        }
+    }
+
+    #[test]
+    fn parses_object_literal_with_shorthand_and_nested_object() {
+        let mut parser = Parser::new();
+        let program = parser.produce_ast("const obj = { x: 100, foo, nested: { bar: true } };");
+
+        match &program.body[0] {
+            Stmt::VariableDeclaration {
+                is_const: true,
+                ident,
+                value,
+            } => {
+                assert_eq!(ident, "obj");
+
+                let Expr::Object(properties) = value else {
+                    panic!("expected object literal value, got: {:?}", value);
+                };
+
+                assert_eq!(properties.len(), 3);
+            }
+            other => panic!("expected const variable declaration, got: {:?}", other),
         }
     }
 }
