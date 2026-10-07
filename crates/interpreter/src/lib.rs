@@ -75,7 +75,7 @@ fn eval_numeric_binop(
         Multiply => lhs * rhs,
         Divide => {
             if rhs == 0.0 {
-                panic!("Cannot divide by zero");
+                return RuntimeValue::Null;
             } else if lhs == 0.0 {
                 0.0
             } else {
@@ -208,8 +208,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Cannot divide by zero")]
-    fn divide_by_zero_panics() {
+    fn divide_by_zero_evaluates_to_null() {
         let program = Program {
             body: vec![expression_stmt(binary(
                 numeric(10.0),
@@ -218,6 +217,19 @@ mod tests {
             ))],
         };
 
-        let _ = evaluate_program(program);
+        assert_eq!(evaluate_program(program), RuntimeValue::Null);
+    }
+
+    #[test]
+    fn zero_divided_by_zero_evaluates_to_null() {
+        let program = Program {
+            body: vec![expression_stmt(binary(
+                numeric(0.0),
+                BinaryOperator::Divide,
+                numeric(0.0),
+            ))],
+        };
+
+        assert_eq!(evaluate_program(program), RuntimeValue::Null);
     }
 }
