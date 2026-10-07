@@ -79,11 +79,11 @@ Note: declarations currently require a trailing semicolon.
 
 ## Roadmap
 
+- [x] Assignment and variable reassignment rules (`const` enforcement)
+- [x] String and boolean literals
 - [ ] Better CLI output for file mode (evaluate program output instead of only printing AST)
-- [ ] String and boolean literals
 - [ ] Unary operators (like negation)
 - [ ] Comparison and logical operators
-- [ ] Assignment and variable reassignment rules (`const` enforcement)
 - [ ] Conditional control flow (`if`/`else`)
 - [ ] Functions and function calls
 - [ ] Better error messages with source locations
