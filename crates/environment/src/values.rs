@@ -1,8 +1,11 @@
-#[derive(Debug, Clone, Copy, PartialEq)]
+use std::collections::HashMap;
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum RuntimeValue {
     Number(f64),
     Boolean(bool),
     Null,
+    Object(HashMap<String, Box<RuntimeValue>>),
 }
 
 impl std::fmt::Display for RuntimeValue {
@@ -10,6 +13,7 @@ impl std::fmt::Display for RuntimeValue {
         match self {
             RuntimeValue::Boolean(value) => write!(f, "{value}"),
             RuntimeValue::Number(value) => write!(f, "{value}"),
+            RuntimeValue::Object(value) => write!(f, "{:#?}", value),
             RuntimeValue::Null => write!(f, "null"),
         }
     }

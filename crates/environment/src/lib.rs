@@ -81,7 +81,7 @@ impl Environment {
             self.constants.insert(name.clone());
         }
 
-        self.variables.insert(name, value);
+        self.variables.insert(name, value.clone());
         value
     }
 
@@ -95,7 +95,7 @@ impl Environment {
         }
 
         if let Some(old_val) = env.variables.get_mut(&name) {
-            *old_val = value;
+            *old_val = value.clone();
             value
         } else {
             panic!(

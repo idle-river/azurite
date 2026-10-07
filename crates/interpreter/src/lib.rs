@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use ast::{Expr, Program, Stmt};
 use environment::Environment;
 use environment::values::RuntimeValue;
@@ -22,7 +24,7 @@ fn eval_stmt(stmt: Stmt, env: &mut Environment) -> RuntimeValue {
 fn eval_expr(ast_node: Expr, env: &mut Environment) -> RuntimeValue {
     match ast_node {
         Expr::NumericLiteral(num) => RuntimeValue::Number(num),
-        Expr::Identifier(ident) => *env.lookup(&ident),
+        Expr::Identifier(ident) => env.lookup(&ident).clone(),
         Expr::Binary {
             left,
             operator,
@@ -45,6 +47,7 @@ fn eval_expr(ast_node: Expr, env: &mut Environment) -> RuntimeValue {
             let result = eval_expr(*value, env);
             env.assign_variable(name, result)
         }
+        Expr::Object(obj) => eval_object_expr(obj, env),
         _ => {
             println!("AST Node: {:#?}", ast_node);
             unimplemented!("This AST node has not been setup.");
@@ -98,6 +101,25 @@ fn eval_var_declaration(var_decl: Stmt, env: &mut Environment) -> RuntimeValue {
     let value: RuntimeValue = eval_expr(value, env);
 
     env.declare_variable(ident, value, is_const)
+}
+
+fn eval_object_expr(obj: Vec<Box<Expr>>, env: &mut Environment) -> RuntimeValue {
+    let mut object = HashMap::new();
+
+    for property in obj {
+        let Expr::Property { key, value } = *property else {
+            panic!("Invalid object property: expected Expr::Property");
+        };
+
+        let runtime_value = match value {
+            Some(expr) => eval_expr(*expr, env),
+            None => env.lookup(&key).clone(),
+        };
+
+        object.insert(key, Box::new(runtime_value));
+    }
+
+    RuntimeValue::Object(object)
 }
 
 #[cfg(test)]
