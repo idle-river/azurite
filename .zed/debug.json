@@ -1,0 +1,11 @@
+[
+  {
+    "label": "Debug Azurite",
+    "adapter": "CodeLLDB",
+    "request": "launch",
+    "program": "$ZED_WORKTREE_ROOT/target/debug/az",
+    "args": ["$ZED_WORKTREE_ROOT/test.az"],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "sourceLanguages": ["rust"]
+  }
+]

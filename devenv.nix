@@ -7,6 +7,7 @@
   packages = with pkgs; [
     cargo-watch
     gdb
+    lldb
   ];
 
   languages.rust = {
