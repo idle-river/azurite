@@ -21,7 +21,7 @@ fn main() {
                 }
             };
 
-            tokenize(content);
+            println!("{:?}", tokenize(content));
         }
 
         None => repl(),
