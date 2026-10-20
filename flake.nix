@@ -1,5 +1,5 @@
 {
-  description = "Rust Starter Flake";
+  description = "the official interpreter for the Azurite programming language";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
@@ -54,8 +54,16 @@
         in
         {
           default = naerskLib.buildPackage {
+            name = "azurite";
             version = "0.1.0";
             src = ./.;
+            cargoBuildOptions =
+              x:
+              x
+              ++ [
+                "-p"
+                "cli"
+              ];
           };
         }
       );

@@ -1,4 +1,3 @@
-#[tokio::main]
-async fn main() {
-    println!("{}", starter_core::add(1, 2))
+fn main() {
+    println!("{}", azurite_core::add(1, 2))
 }
