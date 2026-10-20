@@ -3,12 +3,12 @@
 version = 4
 
 [[package]]
-name = "azurite-core"
-version = "0.1.0"
-
-[[package]]
 name = "cli"
 version = "0.1.0"
 dependencies = [
- "azurite-core",
+ "interpreter",
 ]
+
+[[package]]
+name = "interpreter"
+version = "0.1.0"

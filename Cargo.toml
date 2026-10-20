@@ -3,4 +3,4 @@ members = ["crates/*"]
 resolver = "3"
 
 [workspace.dependencies]
-azurite-core = { path = "./crates/core" }
+interpreter = { path = "./crates/interpreter" }
