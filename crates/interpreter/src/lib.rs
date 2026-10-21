@@ -4,6 +4,7 @@ pub enum Token {
     Identifier(String),
     Number(String),
     BinaryOperator(char),
+    ComparisonOperator(CompOperator), // Could Be ==, >=, <=, !, etc...
     Null,
 
     // Other
@@ -13,6 +14,18 @@ pub enum Token {
     Semicolon,
     Let,
     EOF,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum CompOperator {
+    Bang, // !
+    BangBang,
+    EqualsEquals,
+    Less,
+    LessEquals,
+    Greater,
+    GreaterEquals,
+    NotEqual,
 }
 
 macro_rules! interpreter_error {
@@ -34,12 +47,46 @@ pub fn tokenize(src: String) -> Vec<Token> {
 
     while let Some(c) = chars.next() {
         let new_token = match c {
+            // Handling Comments
+            '#' => {
+                for next_char in chars.by_ref() {
+                    if next_char == '\n' {
+                        break;
+                    }
+                }
+
+                continue;
+            }
+
             // Basic Pattern Matching
             '(' => Token::OpenParen,
             ')' => Token::CloseParen,
             '+' | '-' | '/' | '*' | '%' => Token::BinaryOperator(c),
             ';' => Token::Semicolon,
-            '=' => Token::Equals,
+            '!' | '=' | '>' | '<' => {
+                let mut op = String::from(c);
+
+                if let Some(&next_char) = chars.peek()
+                    && next_char == '='
+                {
+                    op.push(chars.next().unwrap());
+                }
+
+                if op == "=" {
+                    Token::Equals
+                } else {
+                    Token::ComparisonOperator(match op.as_str() {
+                        "!" => CompOperator::Bang,
+                        "!=" => CompOperator::NotEqual,
+                        "==" => CompOperator::EqualsEquals,
+                        ">" => CompOperator::Greater,
+                        ">=" => CompOperator::GreaterEquals,
+                        "<" => CompOperator::Less,
+                        "<=" => CompOperator::LessEquals,
+                        _ => unreachable!(),
+                    })
+                }
+            }
 
             // Literals
             c if c.is_whitespace() => {
