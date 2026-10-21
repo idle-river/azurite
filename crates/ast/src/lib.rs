@@ -6,6 +6,11 @@ pub struct Program {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
     Expr(Expr),
+    VarDecl {
+        constant: bool,
+        identifier: String,
+        value: Expr,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -18,7 +23,6 @@ pub enum Expr {
     Identifier(String),
     FloatingNumber(f64),
     Integer(i32),
-    Null,
 }
 
 #[derive(Debug, Clone, PartialEq)]

@@ -36,25 +36,50 @@ impl Parser {
         Ok(program)
     }
 
-    fn expect(&mut self, expected: &Token) -> Token {
+    pub fn expect(&mut self, predicate: impl FnOnce(&Token) -> bool) -> Token {
+        use std::process::exit;
         match self.tokens.next() {
-            Some(tok) if &tok == expected => tok,
-            other => {
-                eprintln!(
-                    "Unexpected token; found {:?} - expected {:?}",
-                    other, expected
-                );
-                std::process::exit(1);
+            Some(tok) if predicate(&tok) => tok,
+            Some(other) => {
+                eprintln!("Unexpected token; found {:?}", other);
+                exit(1);
+            }
+            None => {
+                eprintln!("Token not found");
+                exit(1);
             }
         }
     }
 
     fn parse_stmt(&mut self) -> Stmt {
-        Stmt::Expr(self.parse_expr())
+        let tk = self.tokens.peek().unwrap();
+        match tk {
+            Token::Let | Token::Const => self.parse_var_decl(),
+            _ => Stmt::Expr(self.parse_expr()),
+        }
     }
 
     fn parse_expr(&mut self) -> Expr {
         self.parse_additive_expr()
+    }
+
+    fn parse_var_decl(&mut self) -> Stmt {
+        let is_constant = self.tokens.next().unwrap() == Token::Const;
+        let Token::Identifier(ident) = self.expect(|tok| matches!(tok, &Token::Identifier(_)))
+        else {
+            unreachable!()
+        };
+
+        self.expect(|tok| tok == &Token::Equals);
+
+        let val = self.parse_expr();
+        self.expect(|tok| tok == &Token::Semicolon);
+
+        Stmt::VarDecl {
+            constant: is_constant,
+            identifier: ident,
+            value: val,
+        }
     }
 
     fn parse_primary_expr(&mut self) -> Expr {
@@ -69,10 +94,9 @@ impl Parser {
                     Expr::Integer(num.parse::<i32>().unwrap())
                 }
             }
-            Token::Null => Expr::Null,
             Token::OpenParen => {
                 let expr = self.parse_additive_expr();
-                self.expect(&Token::CloseParen);
+                self.expect(|tok| tok == &Token::CloseParen);
 
                 expr
             }

@@ -1,11 +1,12 @@
 mod values;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 pub use values::RuntimeVal;
 
 pub struct Scope {
     parent: Option<Box<Scope>>,
     variables: HashMap<String, RuntimeVal>,
+    constants: HashSet<String>,
 }
 
 #[derive(Debug)]
@@ -16,6 +17,7 @@ pub enum ScopeError {
     },
     VariableDoesNotExist(String),
     VariableInsertError(String),
+    ReassignConstantError(String),
 }
 
 impl std::fmt::Display for ScopeError {
@@ -31,6 +33,7 @@ impl std::fmt::Display for ScopeError {
             ),
             ScopeError::VariableInsertError(v) => write!(f, "error inserting variable {v}"),
             ScopeError::VariableDoesNotExist(v) => write!(f, "variable {v} does not exist"),
+            ScopeError::ReassignConstantError(c) => write!(f, "constant {c} cannot be reassigned"),
         }
     }
 }
@@ -42,14 +45,22 @@ impl Scope {
         Self {
             parent: Some(parent),
             variables: HashMap::new(),
+            constants: HashSet::new(),
         }
     }
 
     pub fn global() -> Self {
-        Self {
+        let mut env = Self {
             parent: None,
             variables: HashMap::new(),
-        }
+            constants: HashSet::new(),
+        };
+
+        declare_variable!(env, "true", RuntimeVal::Boolean(true));
+        declare_variable!(env, "false", RuntimeVal::Boolean(false));
+        declare_variable!(env, "null", RuntimeVal::Null);
+
+        env
     }
 
     // Making a new variable
@@ -68,12 +79,32 @@ impl Scope {
         }
     }
 
+    pub fn declare_const_var(&mut self, name: String, value: RuntimeVal) -> Result<(), ScopeError> {
+        use std::collections::hash_map::Entry;
+
+        match self.variables.entry(name.clone()) {
+            Entry::Vacant(entry) => {
+                entry.insert(value);
+                self.constants.insert(name);
+                Ok(())
+            }
+            Entry::Occupied(entry) => Err(ScopeError::VariableAlreadyDeclared {
+                variable_name: entry.key().clone(),
+                declared_value: entry.get().clone(),
+            }),
+        }
+    }
+
     // Assigning to an already existing variable
     pub fn assign_var(&mut self, name: String, value: RuntimeVal) -> Result<(), ScopeError> {
         let old_env = self.resolve(&name)?;
-        *old_env.variables.get_mut(&name).unwrap() = value;
+        if old_env.constants.contains(&name) {
+            Err(ScopeError::ReassignConstantError(name))
+        } else {
+            *old_env.variables.get_mut(&name).unwrap() = value;
 
-        Ok(())
+            Ok(())
+        }
     }
 
     pub fn lookup_var(&mut self, name: String) -> Result<&RuntimeVal, ScopeError> {
@@ -94,6 +125,13 @@ impl Scope {
 
         Err(ScopeError::VariableDoesNotExist(name.to_string()))
     }
+}
+
+#[macro_export]
+macro_rules! declare_variable {
+    ($env:expr, $ident: expr, $t:expr) => {
+        $env.declare_var($ident.to_string(), $t).unwrap()
+    };
 }
 
 #[cfg(test)]

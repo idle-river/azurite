@@ -2,6 +2,7 @@ use std::{env, fs, io::ErrorKind, process};
 
 use interpreter::evaluate;
 use parser::Parser;
+use scopes::{Scope, declare_variable};
 
 fn main() {
     let mut args = env::args();
@@ -23,8 +24,10 @@ fn main() {
             };
 
             let mut parser = Parser::new();
+            let mut global_env = Scope::global();
+
             let ast = parser.produce_ast(&content).unwrap();
-            let res = evaluate(ast);
+            let res = evaluate(ast, &mut global_env);
 
             println!("{:?}", res);
         }
@@ -35,8 +38,12 @@ fn main() {
 
 fn repl() {
     use std::io::{self, Write};
+    let mut global_env = Scope::global();
+
+    declare_variable!(global_env, "x", scopes::RuntimeVal::Integer(46));
 
     let mut parser = Parser::new();
+
     println!("Azurite REPL v1.0");
 
     loop {
@@ -73,7 +80,7 @@ fn repl() {
             }
         };
 
-        let res = evaluate(ast);
+        let res = evaluate(ast, &mut global_env);
 
         println!("Result: {:?}", res);
     }

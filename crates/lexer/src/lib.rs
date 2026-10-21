@@ -8,14 +8,16 @@ pub enum Token {
     BinaryOperator(char),
     ComparisonOperator(CompOperator), // ==, >=, <=, !, etc...
     StrLiteral(String),
-    Null,
+
+    // Keywords
+    Let,
+    Const,
 
     // Syntax
     OpenParen,
     CloseParen,
     Equals,
     Semicolon,
-    Let,
     EOF,
 }
 
@@ -153,7 +155,7 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, InterpreterError> {
 
                 match ident.as_str() {
                     "let" => Token::Let,
-                    "null" => Token::Null,
+                    "const" => Token::Const,
                     _ => Token::Identifier(ident),
                 }
             }
@@ -294,7 +296,10 @@ mod tests {
 
     #[test]
     fn keywords() {
-        assert_eq!(lex("let null"), vec![Let, Null, EOF]);
+        assert_eq!(
+            lex("let null"),
+            vec![Let, Identifier("null".to_string()), EOF]
+        );
     }
 
     #[test]
