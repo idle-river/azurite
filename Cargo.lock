@@ -17,11 +17,18 @@ dependencies = [
 [[package]]
 name = "interpreter"
 version = "0.1.0"
+dependencies = [
+ "ast",
+]
+
+[[package]]
+name = "lexer"
+version = "0.1.0"
 
 [[package]]
 name = "parser"
 version = "0.1.0"
 dependencies = [
  "ast",
- "interpreter",
+ "lexer",
 ]

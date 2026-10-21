@@ -1,5 +1,6 @@
 use std::{env, fs, io::ErrorKind, process};
 
+use interpreter::evaluate;
 use parser::Parser;
 
 fn main() {
@@ -22,8 +23,10 @@ fn main() {
             };
 
             let mut parser = Parser::new();
+            let ast = parser.produce_ast(&content).unwrap();
+            let res = evaluate(ast);
 
-            println!("{:?}", parser.produce_ast(&content));
+            println!("{:?}", res);
         }
 
         None => repl(),
@@ -61,9 +64,16 @@ fn repl() {
             continue;
         }
 
-        match parser.produce_ast(code) {
-            Ok(ast) => println!("AST: {:?}", ast),
-            Err(e) => eprintln!("Parse error: {e}"),
-        }
+        let ast = match parser.produce_ast(code) {
+            Ok(ast) => ast,
+            Err(e) => {
+                use std::process;
+                eprintln!("Parse error: {e}");
+                process::exit(1);
+            }
+        };
+        let res = evaluate(ast);
+
+        println!("{:?}", res);
     }
 }

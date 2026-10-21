@@ -1,5 +1,5 @@
 use ast::{BinaryOp, Expr, Program, Stmt};
-use interpreter::{Token, tokenize};
+use lexer::{Token, tokenize};
 use std::{iter::Peekable, vec::IntoIter};
 
 pub struct Parser {
