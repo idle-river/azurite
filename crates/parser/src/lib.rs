@@ -1,4 +1,4 @@
-use ast::{Expr, Program, Stmt};
+use ast::{BinaryOp, Expr, Program, Stmt};
 use interpreter::{Token, tokenize};
 use std::{iter::Peekable, vec::IntoIter};
 
@@ -41,7 +41,7 @@ impl Parser {
     }
 
     fn parse_expr(&mut self) -> Expr {
-        self.parse_primary_expr()
+        self.parse_additive_expr()
     }
 
     fn parse_primary_expr(&mut self) -> Expr {
@@ -62,5 +62,28 @@ impl Parser {
                 unimplemented!()
             }
         }
+    }
+
+    fn parse_additive_expr(&mut self) -> Expr {
+        let mut left = self.parse_primary_expr();
+
+        while let Some(tk) = self.tokens.peek() {
+            if let Token::BinaryOperator(c) = tk {
+                let c = *c;
+                self.tokens.next(); // consume the - token so parse_primary doesnt panic
+                let op = BinaryOp::new(c);
+                let right = self.parse_primary_expr();
+
+                left = Expr::Binary {
+                    left: Box::new(left),
+                    op,
+                    right: Box::new(right),
+                };
+            } else {
+                break;
+            }
+        }
+
+        left
     }
 }
