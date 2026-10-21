@@ -14,6 +14,7 @@ pub enum ScopeError {
         variable_name: String,
         declared_value: RuntimeVal,
     },
+    VariableDoesNotExist(String),
     VariableInsertError(String),
 }
 
@@ -29,6 +30,7 @@ impl std::fmt::Display for ScopeError {
                 variable_name, declared_value
             ),
             ScopeError::VariableInsertError(v) => write!(f, "error inserting variable {v}"),
+            ScopeError::VariableDoesNotExist(v) => write!(f, "variable {v} does not exist"),
         }
     }
 }
@@ -50,17 +52,14 @@ impl Scope {
         }
     }
 
-    pub fn declare_var(
-        &mut self,
-        name: String,
-        value: RuntimeVal,
-    ) -> Result<RuntimeVal, ScopeError> {
+    // Making a new variable
+    pub fn declare_var(&mut self, name: String, value: RuntimeVal) -> Result<(), ScopeError> {
         use std::collections::hash_map::Entry;
 
         match self.variables.entry(name) {
             Entry::Vacant(entry) => {
-                entry.insert(value.clone());
-                Ok(value)
+                entry.insert(value);
+                Ok(())
             }
             Entry::Occupied(entry) => Err(ScopeError::VariableAlreadyDeclared {
                 variable_name: entry.key().clone(),
@@ -68,4 +67,34 @@ impl Scope {
             }),
         }
     }
+
+    // Assigning to an already existing variable
+    pub fn assign_var(&mut self, name: String, value: RuntimeVal) -> Result<(), ScopeError> {
+        let old_env = self.resolve(&name)?;
+        *old_env.variables.get_mut(&name).unwrap() = value;
+
+        Ok(())
+    }
+
+    pub fn lookup_var(&mut self, name: String) -> Result<&RuntimeVal, ScopeError> {
+        let old_env = self.resolve(&name)?;
+        Ok(old_env.variables.get(&name).unwrap())
+    }
+
+    pub fn resolve(&mut self, name: &str) -> Result<&mut Scope, ScopeError> {
+        let mut current = Some(self);
+
+        while let Some(scope) = current {
+            if let Some(_) = scope.variables.get(name) {
+                return Ok(scope);
+            }
+
+            current = scope.parent.as_deref_mut();
+        }
+
+        Err(ScopeError::VariableDoesNotExist(name.to_string()))
+    }
 }
+
+#[cfg(test)]
+mod tests;

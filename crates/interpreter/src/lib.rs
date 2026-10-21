@@ -34,7 +34,7 @@ fn evaluate_expr(expr: Expr) -> RuntimeVal {
 macro_rules! arith {
     ($lhs:expr, $rhs:expr, $op:tt) => {
         match ($lhs, $rhs) {
-            (RuntimeVal::Integer(a), RuntimeVal::Integer(b)) => RuntimeVal::Integer(a $op b),
+            (RuntimeVal::Integer(a), RuntimeVal::Integer(b)) => RuntimeVal::FloatingNumber((a as f64) $op (b as f64)),
             (RuntimeVal::FloatingNumber(a), RuntimeVal::FloatingNumber(b)) => {
                 RuntimeVal::FloatingNumber(a $op b)
             }

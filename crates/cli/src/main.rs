@@ -72,8 +72,9 @@ fn repl() {
                 process::exit(1);
             }
         };
+
         let res = evaluate(ast);
 
-        println!("{:?}", res);
+        println!("Result: {:?}", res);
     }
 }
