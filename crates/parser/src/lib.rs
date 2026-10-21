@@ -36,16 +36,17 @@ impl Parser {
         Ok(program)
     }
 
-    pub fn expect(&mut self, predicate: impl FnOnce(&Token) -> bool) -> Token {
+    pub fn expect(&mut self, predicate: impl FnOnce(&Token) -> bool, expected: &str) -> Token {
         use std::process::exit;
+
         match self.tokens.next() {
             Some(tok) if predicate(&tok) => tok,
             Some(other) => {
-                eprintln!("Unexpected token; found {:?}", other);
+                eprintln!("Expected {}, found {:?}", expected, other);
                 exit(1);
             }
             None => {
-                eprintln!("Token not found");
+                eprintln!("Expected {}, found end of input", expected);
                 exit(1);
             }
         }
@@ -63,8 +64,54 @@ impl Parser {
         self.parse_assignment_expr()
     }
 
+    fn parse_object_expr(&mut self) -> Expr {
+        if Some(&Token::OpenBrace) != self.tokens.peek() {
+            return self.parse_additive_expr();
+        };
+        self.tokens.next(); // consume `{`
+
+        // Key: ident
+        let mut props = Vec::<Box<Expr>>::new();
+        while let Some(tok) = self.tokens.peek() {
+            if tok == &Token::CloseBrace {
+                break;
+            }
+
+            let Token::Identifier(key) =
+                self.expect(|tok| matches!(tok, &Token::Identifier(_)), "an identifier")
+            else {
+                unreachable!()
+            };
+
+            // Shorthand: `foo,` or `foo }` (peek only, don't consume the comma)
+            if matches!(self.tokens.peek(), Some(Token::Comma | Token::CloseBrace)) {
+                props.push(Box::new(Expr::Properties { key, value: None }));
+            } else {
+                self.expect(|tok| tok == &Token::Colon, "a colon");
+
+                let value = self.parse_expr();
+
+                props.push(Box::new(Expr::Properties {
+                    key,
+                    value: Some(Box::new(value)),
+                }));
+            }
+
+            // The only place a comma is consumed
+            if Some(&Token::Comma) == self.tokens.peek() {
+                self.tokens.next();
+            } else {
+                break;
+            }
+        }
+
+        self.expect(|tok| tok == &Token::CloseBrace, "a closing brace");
+
+        Expr::Object(props)
+    }
+
     fn parse_assignment_expr(&mut self) -> Expr {
-        let left = self.parse_additive_expr();
+        let left = self.parse_object_expr();
 
         if Some(&Token::Equals) == self.tokens.peek() {
             self.tokens.next().unwrap(); // advance past equals
@@ -80,15 +127,17 @@ impl Parser {
 
     fn parse_var_decl(&mut self) -> Stmt {
         let is_constant = self.tokens.next().unwrap() == Token::Const;
-        let Token::Identifier(ident) = self.expect(|tok| matches!(tok, &Token::Identifier(_)))
+        let Token::Identifier(ident) =
+            self.expect(|tok| matches!(tok, &Token::Identifier(_)), "an identifier")
         else {
             unreachable!()
         };
 
-        self.expect(|tok| tok == &Token::Equals);
+        self.expect(|tok| tok == &Token::Equals, "an equals");
 
         let val = self.parse_expr();
-        self.expect(|tok| tok == &Token::Semicolon);
+        let msg = format!("a semicolon (line {})", line!() + 1);
+        self.expect(|tok| tok == &Token::Semicolon, &msg);
 
         Stmt::VarDecl {
             constant: is_constant,
@@ -111,13 +160,16 @@ impl Parser {
             }
             Token::OpenParen => {
                 let expr = self.parse_additive_expr();
-                self.expect(|tok| tok == &Token::CloseParen);
+                self.expect(|tok| tok == &Token::CloseParen, "a closing paren");
 
                 expr
             }
 
             _ => {
                 eprintln!("Unexpected token found during parsing: {:?}", tk);
+                while let Some(tok) = self.tokens.next() {
+                    println!("Token: {:#?}", tok);
+                }
                 unimplemented!()
             }
         }

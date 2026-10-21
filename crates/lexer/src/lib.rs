@@ -16,6 +16,10 @@ pub enum Token {
     // Syntax
     OpenParen,
     CloseParen,
+    OpenBrace,
+    CloseBrace,
+    Comma,
+    Colon,
     Equals,
     Semicolon,
     EOF,
@@ -100,6 +104,10 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, InterpreterError> {
             ')' => Token::CloseParen,
             '+' | '-' | '/' | '*' | '%' => Token::BinaryOperator(c),
             ';' => Token::Semicolon,
+            ':' => Token::Colon,
+            ',' => Token::Comma,
+            '{' => Token::OpenBrace,
+            '}' => Token::CloseBrace,
 
             '!' | '=' | '>' | '<' => {
                 let has_eq = chars.next_if_eq(&'=').is_some();

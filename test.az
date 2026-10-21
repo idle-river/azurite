@@ -1,1 +1,10 @@
-let x = 10.36;
+const foo = 46;
+
+const obj = {
+    x: 100,
+    y: 32,
+    foo,
+    complex: {
+        bar: true
+    }
+};

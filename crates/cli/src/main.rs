@@ -2,7 +2,7 @@ use std::{env, fs, io::ErrorKind, process};
 
 use interpreter::evaluate;
 use parser::Parser;
-use scopes::{Scope, declare_variable};
+use scopes::Scope;
 
 fn main() {
     let mut args = env::args();

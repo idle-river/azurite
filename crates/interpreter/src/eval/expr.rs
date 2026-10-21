@@ -9,5 +9,9 @@ pub(crate) fn evaluate_expr(expr: Expr, env: &mut Scope) -> RuntimeVal {
         Expr::Identifier(ident) => env.lookup_var(ident).unwrap().clone(),
         Expr::Binary { left, op, right } => evaluate_binary_expr(*left, op, *right, env),
         Expr::Assignment { assigne, value } => evaluate_assign_expr(*assigne, *value, env),
+        e @ Expr::Object(_) | e @ Expr::Properties { .. } => {
+            println!("{:#?}", e);
+            RuntimeVal::Null
+        }
     }
 }

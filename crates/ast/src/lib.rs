@@ -30,6 +30,11 @@ pub enum Expr {
     Identifier(String),
     FloatingNumber(f64),
     Integer(i32),
+    Object(Vec<Box<Expr>>),
+    Properties {
+        key: String,
+        value: Option<Box<Expr>>,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq)]
