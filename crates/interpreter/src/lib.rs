@@ -8,7 +8,7 @@ pub enum Token {
     StrLiteral(String),
     Null,
 
-    // Other
+    // Syntax
     OpenParen,
     CloseParen,
     Equals,
@@ -88,6 +88,7 @@ pub fn tokenize(src: String) -> Vec<Token> {
                 }
             }
 
+            // Literals
             '"' => {
                 let mut string = String::new();
 
@@ -113,8 +114,6 @@ pub fn tokenize(src: String) -> Vec<Token> {
 
                 Token::StrLiteral(string)
             }
-
-            // Literals
             c if c.is_whitespace() => {
                 if c == '\n' {
                     current_lines += 1;
@@ -143,11 +142,11 @@ pub fn tokenize(src: String) -> Vec<Token> {
                 let mut num = String::from(c);
 
                 while let Some(next_char) = chars.peek() {
-                    if !next_char.is_numeric() {
+                    if next_char.is_numeric() || next_char == &'.' {
+                        num.push(chars.next().unwrap());
+                    } else {
                         break;
                     }
-
-                    num.push(chars.next().unwrap());
                 }
 
                 Token::Number(num)
