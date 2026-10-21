@@ -69,6 +69,7 @@ impl Parser {
                     Expr::Integer(num.parse::<i32>().unwrap())
                 }
             }
+            Token::Null => Expr::Null,
             Token::OpenParen => {
                 let expr = self.parse_additive_expr();
                 self.expect(&Token::CloseParen);

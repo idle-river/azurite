@@ -18,6 +18,7 @@ pub enum Expr {
     Identifier(String),
     FloatingNumber(f32),
     Integer(i32),
+    Null,
 }
 
 #[derive(Debug, Clone, PartialEq)]
