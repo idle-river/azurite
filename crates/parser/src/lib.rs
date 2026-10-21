@@ -64,7 +64,7 @@ impl Parser {
             Token::Identifier(ident) => Expr::Identifier(ident),
             Token::Number(num) => {
                 if num.contains(".") {
-                    Expr::FloatingNumber(num.parse::<f32>().unwrap())
+                    Expr::FloatingNumber(num.parse::<f64>().unwrap())
                 } else {
                     Expr::Integer(num.parse::<i32>().unwrap())
                 }

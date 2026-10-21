@@ -16,7 +16,7 @@ pub enum Expr {
         right: Box<Expr>,
     },
     Identifier(String),
-    FloatingNumber(f32),
+    FloatingNumber(f64),
     Integer(i32),
     Null,
 }

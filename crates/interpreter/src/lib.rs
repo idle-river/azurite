@@ -1,6 +1,5 @@
-use ast::{Expr, Program, Stmt};
-
 use crate::values::RuntimeVal;
+use ast::{BinaryOp, Expr, Program, Stmt};
 
 mod values;
 
@@ -26,9 +25,49 @@ fn evaluate_expr(expr: Expr) -> RuntimeVal {
         Expr::Integer(i) => RuntimeVal::Integer(i),
         Expr::FloatingNumber(f) => RuntimeVal::FloatingNumber(f),
         Expr::Null => RuntimeVal::Null,
+        Expr::Binary { left, op, right } => evaluate_binary_expr(*left, op, *right),
         _ => {
             eprintln!("AST Node: {:?} has not been setup for interpretation", expr);
             process::exit(1);
         }
+    }
+}
+
+macro_rules! arith {
+    ($lhs:expr, $rhs:expr, $op:tt) => {
+        match ($lhs, $rhs) {
+            (RuntimeVal::Integer(a), RuntimeVal::Integer(b)) => RuntimeVal::FloatingNumber((a as f64) $op (b as f64)),
+            (RuntimeVal::FloatingNumber(a), RuntimeVal::FloatingNumber(b)) => RuntimeVal::FloatingNumber(a $op b),
+            (RuntimeVal::Integer(a), RuntimeVal::FloatingNumber(b)) => RuntimeVal::FloatingNumber((a as f64) $op b),
+            (RuntimeVal::FloatingNumber(a), RuntimeVal::Integer(b)) => RuntimeVal::FloatingNumber(a $op (b as f64)),
+            _ => panic!("binary operation on non-numeric values"),
+        }
+    };
+}
+
+fn evaluate_binary_expr(left: Expr, op: BinaryOp, right: Expr) -> RuntimeVal {
+    let lhs = evaluate_expr(left);
+    let rhs = evaluate_expr(right);
+
+    if lhs == RuntimeVal::Null || rhs == RuntimeVal::Null {
+        return RuntimeVal::Null;
+    }
+
+    match op {
+        BinaryOp::Add => arith!(lhs, rhs, +),
+        BinaryOp::Subtract => arith!(lhs, rhs, -),
+        BinaryOp::Multiply => arith!(lhs, rhs, *),
+        BinaryOp::Divide => {
+            if lhs == RuntimeVal::Integer(0) || lhs == RuntimeVal::FloatingNumber(0.0) {
+                return RuntimeVal::FloatingNumber(0.0);
+            }
+
+            if rhs == RuntimeVal::Integer(0) || lhs == RuntimeVal::FloatingNumber(0.0) {
+                panic!("rhs division by 0");
+            }
+
+            arith!(lhs, rhs, /)
+        }
+        BinaryOp::Modulus => arith!(lhs, rhs, %),
     }
 }
