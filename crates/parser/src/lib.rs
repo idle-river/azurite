@@ -60,7 +60,22 @@ impl Parser {
     }
 
     fn parse_expr(&mut self) -> Expr {
-        self.parse_additive_expr()
+        self.parse_assignment_expr()
+    }
+
+    fn parse_assignment_expr(&mut self) -> Expr {
+        let left = self.parse_additive_expr();
+
+        if Some(&Token::Equals) == self.tokens.peek() {
+            self.tokens.next().unwrap(); // advance past equals
+            let value = self.parse_additive_expr();
+            Expr::Assignment {
+                assigne: Box::new(left),
+                value: Box::new(value),
+            }
+        } else {
+            left
+        }
     }
 
     fn parse_var_decl(&mut self) -> Stmt {

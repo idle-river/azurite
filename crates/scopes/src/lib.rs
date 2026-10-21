@@ -56,9 +56,9 @@ impl Scope {
             constants: HashSet::new(),
         };
 
-        declare_variable!(env, "true", RuntimeVal::Boolean(true));
-        declare_variable!(env, "false", RuntimeVal::Boolean(false));
-        declare_variable!(env, "null", RuntimeVal::Null);
+        declare_variable!(env, "true", RuntimeVal::Boolean(true), true);
+        declare_variable!(env, "false", RuntimeVal::Boolean(false), true);
+        declare_variable!(env, "null", RuntimeVal::Null, true);
 
         env
     }
@@ -132,6 +132,13 @@ macro_rules! declare_variable {
     ($env:expr, $ident: expr, $t:expr) => {
         $env.declare_var($ident.to_string(), $t).unwrap()
     };
+    ($env:expr, $ident: expr, $t:expr, $constant: expr) => {{
+        if $constant {
+            $env.declare_const_var($ident.to_string(), $t).unwrap()
+        } else {
+            $env.declare_var($ident.to_string(), $t).unwrap()
+        }
+    }};
 }
 
 #[cfg(test)]

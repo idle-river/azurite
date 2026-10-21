@@ -20,6 +20,13 @@ pub enum Expr {
         op: BinaryOp,
         right: Box<Expr>,
     },
+    Assignment {
+        // Expr bc you might also need to eval stuff like
+        // foo.bar
+        // foo["bar"]
+        assigne: Box<Expr>,
+        value: Box<Expr>,
+    },
     Identifier(String),
     FloatingNumber(f64),
     Integer(i32),

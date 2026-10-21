@@ -39,9 +39,6 @@ fn main() {
 fn repl() {
     use std::io::{self, Write};
     let mut global_env = Scope::global();
-
-    declare_variable!(global_env, "x", scopes::RuntimeVal::Integer(46));
-
     let mut parser = Parser::new();
 
     println!("Azurite REPL v1.0");
