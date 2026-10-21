@@ -36,6 +36,19 @@ impl Parser {
         Ok(program)
     }
 
+    fn expect(&mut self, expected: &Token) -> Token {
+        match self.tokens.next() {
+            Some(tok) if &tok == expected => tok,
+            other => {
+                eprintln!(
+                    "Unexpected token; found {:?} - expected {:?}",
+                    other, expected
+                );
+                std::process::exit(1);
+            }
+        }
+    }
+
     fn parse_stmt(&mut self) -> Stmt {
         Stmt::Expr(self.parse_expr())
     }
@@ -55,6 +68,12 @@ impl Parser {
                 } else {
                     Expr::Integer(num.parse::<i32>().unwrap())
                 }
+            }
+            Token::OpenParen => {
+                let expr = self.parse_additive_expr();
+                self.expect(&Token::CloseParen);
+
+                expr
             }
 
             _ => {
