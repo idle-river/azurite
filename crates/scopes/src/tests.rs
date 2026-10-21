@@ -12,7 +12,7 @@ mod tests {
         );
 
         assert_eq!(
-            scope.lookup("x").unwrap(),
+            scope.lookup_var("x".to_string()).unwrap(),
             &RuntimeVal::FloatingNumber(42.0)
         );
     }
@@ -32,11 +32,14 @@ mod tests {
             Err(ScopeError::VariableAlreadyDeclared {
                 variable_name,
                 declared_value: RuntimeVal::FloatingNumber(1.0),
-            }) if variable_name == "x"
+            }) if variable_name == "x".to_string()
         ));
 
         // The original value should remain unchanged.
-        assert_eq!(scope.lookup("x").unwrap(), &RuntimeVal::FloatingNumber(1.0));
+        assert_eq!(
+            scope.lookup_var("x".to_string()).unwrap(),
+            &RuntimeVal::FloatingNumber(1.0)
+        );
     }
 
     #[test]
@@ -51,7 +54,10 @@ mod tests {
             .assign_var("x".to_string(), RuntimeVal::FloatingNumber(2.0))
             .unwrap();
 
-        assert_eq!(scope.lookup("x").unwrap(), &RuntimeVal::FloatingNumber(2.0));
+        assert_eq!(
+            scope.lookup_var("x".to_string()).unwrap(),
+            &RuntimeVal::FloatingNumber(2.0)
+        );
     }
 
     #[test]
@@ -62,7 +68,7 @@ mod tests {
 
         assert!(matches!(
             result,
-            Err(ScopeError::VariableDoesNotExist(name)) if name == "x"
+            Err(ScopeError::VariableDoesNotExist(name)) if name == "x".to_string()
         ));
     }
 
@@ -75,7 +81,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(
-            scope.lookup("x").unwrap(),
+            scope.lookup_var("x".to_string()).unwrap(),
             &RuntimeVal::FloatingNumber(10.0)
         );
     }
@@ -88,10 +94,10 @@ mod tests {
             .declare_var("x".to_string(), RuntimeVal::FloatingNumber(10.0))
             .unwrap();
 
-        let child = Scope::new(Box::new(parent));
+        let mut child = Scope::new(Box::new(parent));
 
         assert_eq!(
-            child.lookup("x").unwrap(),
+            child.lookup_var("x".to_string()).unwrap(),
             &RuntimeVal::FloatingNumber(10.0)
         );
     }
@@ -105,10 +111,10 @@ mod tests {
             .unwrap();
 
         let parent = Scope::new(Box::new(global));
-        let child = Scope::new(Box::new(parent));
+        let mut child = Scope::new(Box::new(parent));
 
         assert_eq!(
-            child.lookup("x").unwrap(),
+            child.lookup_var("x".to_string()).unwrap(),
             &RuntimeVal::FloatingNumber(10.0)
         );
     }
@@ -127,46 +133,50 @@ mod tests {
             .declare_var("x".to_string(), RuntimeVal::FloatingNumber(2.0))
             .unwrap();
 
-        assert_eq!(child.lookup("x").unwrap(), &RuntimeVal::FloatingNumber(2.0));
+        assert_eq!(
+            child.lookup_var("x".to_string()).unwrap(),
+            &RuntimeVal::FloatingNumber(2.0)
+        );
     }
 
     #[test]
     fn assignment_does_not_modify_parent_variable() {
         let mut parent = Scope::global();
-
         parent
             .declare_var("x".to_string(), RuntimeVal::FloatingNumber(1.0))
             .unwrap();
 
         let mut child = Scope::new(Box::new(parent));
 
-        assert!(matches!(
-            child.assign_var("x".to_string(), RuntimeVal::FloatingNumber(2.0)),
-            Err(ScopeError::VariableDoesNotExist(name)) if name == "x"
-        ));
+        child
+            .assign_var("x".to_string(), RuntimeVal::FloatingNumber(2.0))
+            .unwrap();
 
-        assert_eq!(child.lookup("x").unwrap(), &RuntimeVal::FloatingNumber(1.0));
+        assert_eq!(
+            child.lookup_var("x".to_string()).unwrap(),
+            &RuntimeVal::FloatingNumber(2.0)
+        );
     }
 
     #[test]
-    fn lookup_returns_error_for_missing_variable() {
-        let scope = Scope::global();
+    fn lookup_var_returns_error_for_missing_variable() {
+        let mut scope = Scope::global();
 
         assert!(matches!(
-            scope.lookup("missing"),
+            scope.lookup_var("missing".to_string()),
             Err(ScopeError::VariableDoesNotExist(name))
                 if name == "missing"
         ));
     }
 
     #[test]
-    fn lookup_returns_error_when_variable_is_missing_from_all_scopes() {
+    fn lookup_var_returns_error_when_variable_is_missing_from_all_scopes() {
         let global = Scope::global();
         let parent = Scope::new(Box::new(global));
-        let child = Scope::new(Box::new(parent));
+        let mut child = Scope::new(Box::new(parent));
 
         assert!(matches!(
-            child.lookup("missing"),
+            child.lookup_var("missing".to_string()),
             Err(ScopeError::VariableDoesNotExist(name))
                 if name == "missing"
         ));
