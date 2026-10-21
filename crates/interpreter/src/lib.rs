@@ -5,6 +5,7 @@ pub enum Token {
     Number(String),
     BinaryOperator(char),
     ComparisonOperator(CompOperator), // Could Be ==, >=, <=, !, etc...
+    StrLiteral(String),
     Null,
 
     // Other
@@ -41,7 +42,6 @@ macro_rules! interpreter_error {
 
 pub fn tokenize(src: String) -> Vec<Token> {
     let mut current_lines = 1u16;
-
     let mut tokens = Vec::<Token>::new();
     let mut chars = src.chars().peekable();
 
@@ -86,6 +86,32 @@ pub fn tokenize(src: String) -> Vec<Token> {
                         _ => unreachable!(),
                     })
                 }
+            }
+
+            '"' => {
+                let mut string = String::new();
+
+                loop {
+                    match chars.next() {
+                        Some('"') => break, // Closing quote found
+                        Some(c) => {
+                            if c == '\n' {
+                                interpreter_error!(
+                                    current_lines,
+                                    "string does not end on the same line"
+                                );
+                            } else {
+                                string.push(c);
+                            }
+                        }
+                        None => {
+                            // Unterminated string literal!
+                            interpreter_error!(current_lines, "Unterminated string literal");
+                        }
+                    }
+                }
+
+                Token::StrLiteral(string)
             }
 
             // Literals
