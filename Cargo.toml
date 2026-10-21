@@ -3,7 +3,8 @@ members = ["crates/*"]
 resolver = "3"
 
 [workspace.dependencies]
+parser = { path = "./crates/parser" }
+scopes = { path = "./crates/scopes" }
 interpreter = { path = "./crates/interpreter" }
 lexer = { path = "./crates/lexer" }
 ast = { path = "./crates/ast" }
-parser = { path = "./crates/parser" }

@@ -1,7 +1,5 @@
-use crate::values::RuntimeVal;
 use ast::{BinaryOp, Expr, Program, Stmt};
-
-mod values;
+use scopes::RuntimeVal;
 
 pub fn evaluate(program: Program) -> RuntimeVal {
     let mut last = RuntimeVal::Null; // an empty program evaluates to Null
@@ -36,11 +34,11 @@ fn evaluate_expr(expr: Expr) -> RuntimeVal {
 macro_rules! arith {
     ($lhs:expr, $rhs:expr, $op:tt) => {
         match ($lhs, $rhs) {
-            (RuntimeVal::Integer(a), RuntimeVal::Integer(b)) => RuntimeVal::FloatingNumber((a as f64) $op (b as f64)),
-            (RuntimeVal::FloatingNumber(a), RuntimeVal::FloatingNumber(b)) => RuntimeVal::FloatingNumber(a $op b),
-            (RuntimeVal::Integer(a), RuntimeVal::FloatingNumber(b)) => RuntimeVal::FloatingNumber((a as f64) $op b),
-            (RuntimeVal::FloatingNumber(a), RuntimeVal::Integer(b)) => RuntimeVal::FloatingNumber(a $op (b as f64)),
-            _ => panic!("binary operation on non-numeric values"),
+            (RuntimeVal::Integer(a), RuntimeVal::Integer(b)) => RuntimeVal::Integer(a $op b),
+            (RuntimeVal::FloatingNumber(a), RuntimeVal::FloatingNumber(b)) => {
+                RuntimeVal::FloatingNumber(a $op b)
+            }
+            (l, r) => panic!("mismatched operand types: {:?} and {:?}", l, r),
         }
     };
 }
