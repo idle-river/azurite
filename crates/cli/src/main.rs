@@ -1,6 +1,6 @@
 use std::{env, fs, io::ErrorKind, process};
 
-use interpreter::tokenize;
+use parser::Parser;
 
 fn main() {
     let mut args = env::args();
@@ -21,7 +21,9 @@ fn main() {
                 }
             };
 
-            println!("{:?}", tokenize(&content));
+            let mut parser = Parser::new();
+
+            println!("{:?}", parser.produce_ast(&content));
         }
 
         None => repl(),
@@ -29,5 +31,39 @@ fn main() {
 }
 
 fn repl() {
-    todo!("repl has not been implemented yet");
+    use std::io::{self, Write};
+
+    let mut parser = Parser::new();
+    println!("Azurite REPL v1.0");
+
+    loop {
+        print!(">>> ");
+        io::stdout().flush().unwrap();
+
+        let mut code = String::new();
+
+        match io::stdin().read_line(&mut code) {
+            Ok(0) => break, // EOF (e.g. Ctrl+D on macOS)
+            Ok(_) => {}
+            Err(e) => {
+                eprintln!("Failed to read input: {e}");
+                break;
+            }
+        }
+
+        let code = code.trim();
+
+        if code == "exit" {
+            break;
+        }
+
+        if code.is_empty() {
+            continue;
+        }
+
+        match parser.produce_ast(code) {
+            Ok(ast) => println!("AST: {:?}", ast),
+            Err(e) => eprintln!("Parse error: {e}"),
+        }
+    }
 }
