@@ -65,23 +65,40 @@ impl Parser {
     }
 
     fn parse_additive_expr(&mut self) -> Expr {
+        let mut left = self.parse_multiplicative_expr();
+
+        while let Some(&Token::BinaryOperator(c)) = self.tokens.peek() {
+            if !matches!(c, '+' | '-') {
+                break; // not ours, leave it for a caller
+            }
+            self.tokens.next();
+            let right = self.parse_multiplicative_expr();
+
+            left = Expr::Binary {
+                left: Box::new(left),
+                op: BinaryOp::new(c),
+                right: Box::new(right),
+            };
+        }
+
+        left
+    }
+
+    fn parse_multiplicative_expr(&mut self) -> Expr {
         let mut left = self.parse_primary_expr();
 
-        while let Some(tk) = self.tokens.peek() {
-            if let Token::BinaryOperator(c) = tk {
-                let c = *c;
-                self.tokens.next(); // consume the - token so parse_primary doesnt panic
-                let op = BinaryOp::new(c);
-                let right = self.parse_primary_expr();
-
-                left = Expr::Binary {
-                    left: Box::new(left),
-                    op,
-                    right: Box::new(right),
-                };
-            } else {
+        while let Some(&Token::BinaryOperator(c)) = self.tokens.peek() {
+            if !matches!(c, '*' | '/' | '%') {
                 break;
             }
+            self.tokens.next();
+            let right = self.parse_primary_expr();
+
+            left = Expr::Binary {
+                left: Box::new(left),
+                op: BinaryOp::new(c),
+                right: Box::new(right),
+            };
         }
 
         left
