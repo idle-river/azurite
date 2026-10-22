@@ -4,11 +4,11 @@ use crate::eval::evaluate_expr;
 use ast::Expr;
 use scopes::{RuntimeVal, Scope};
 
-pub fn evaluate_object_expr(props: Vec<Box<Expr>>, env: &mut Scope) -> RuntimeVal {
+pub fn evaluate_object_expr(props: Vec<Expr>, env: &mut Scope) -> RuntimeVal {
     let mut properties = HashMap::new();
 
     for prop in props {
-        let Expr::Properties { key, value } = *prop else {
+        let Expr::Properties { key, value } = prop else {
             unreachable!()
         };
 

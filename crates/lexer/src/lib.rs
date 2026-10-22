@@ -18,6 +18,9 @@ pub enum Token {
     CloseParen,
     OpenBrace,
     CloseBrace,
+    OpenBracket,
+    CloseBracket,
+    Dot,
     Comma,
     Colon,
     Equals,
@@ -108,6 +111,9 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, InterpreterError> {
             ',' => Token::Comma,
             '{' => Token::OpenBrace,
             '}' => Token::CloseBrace,
+            '[' => Token::OpenBracket,
+            ']' => Token::CloseBracket,
+            '.' => Token::Dot,
 
             '!' | '=' | '>' | '<' => {
                 let has_eq = chars.next_if_eq(&'=').is_some();

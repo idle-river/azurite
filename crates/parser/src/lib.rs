@@ -56,7 +56,13 @@ impl Parser {
         let tk = self.tokens.peek().unwrap();
         match tk {
             Token::Let | Token::Const => self.parse_var_decl(),
-            _ => Stmt::Expr(self.parse_expr()),
+            _ => {
+                let expr = self.parse_expr();
+                if Some(&Token::Semicolon) == self.tokens.peek() {
+                    self.tokens.next();
+                }
+                Stmt::Expr(expr)
+            }
         }
     }
 
@@ -167,7 +173,7 @@ impl Parser {
 
             _ => {
                 eprintln!("Unexpected token found during parsing: {:?}", tk);
-                while let Some(tok) = self.tokens.next() {
+                for tok in self.tokens.by_ref() {
                     println!("Token: {:#?}", tok);
                 }
                 unimplemented!()
@@ -196,14 +202,14 @@ impl Parser {
     }
 
     fn parse_multiplicative_expr(&mut self) -> Expr {
-        let mut left = self.parse_primary_expr();
+        let mut left = self.parse_call_member_expr();
 
         while let Some(&Token::BinaryOperator(c)) = self.tokens.peek() {
             if !matches!(c, '*' | '/' | '%') {
                 break;
             }
             self.tokens.next();
-            let right = self.parse_primary_expr();
+            let right = self.parse_call_member_expr();
 
             left = Expr::Binary {
                 left: Box::new(left),
@@ -213,5 +219,140 @@ impl Parser {
         }
 
         left
+    }
+
+    fn parse_call_member_expr(&mut self) -> Expr {
+        let member = self.parse_member_expr();
+
+        if Some(&Token::OpenParen) == self.tokens.peek() {
+            self.parse_call_expr(member)
+        } else {
+            member
+        }
+    }
+
+    fn parse_call_expr(&mut self, calle: Expr) -> Expr {
+        let args = self
+            .parse_args()
+            .iter()
+            .map(|arg| Box::new(arg.clone()))
+            .collect();
+
+        let mut call_expr = Expr::Call {
+            args,
+            calle: Box::new(calle),
+        };
+
+        if Some(&Token::OpenParen) == self.tokens.peek() {
+            call_expr = self.parse_call_expr(call_expr);
+        }
+
+        call_expr
+    }
+
+    fn parse_args(&mut self) -> Vec<Expr> {
+        self.expect(|tok| tok == &Token::OpenParen, "an opening paren");
+
+        let args: Vec<Expr> = if Some(&Token::CloseParen) == self.tokens.peek() {
+            Vec::<Expr>::new()
+        } else {
+            self.parse_arguments_list()
+        };
+
+        self.expect(|tok| tok == &Token::CloseParen, "a closing paren");
+
+        args
+    }
+
+    fn parse_arguments_list(&mut self) -> Vec<Expr> {
+        let mut args = vec![self.parse_assignment_expr()];
+
+        while let Some(tok) = self.tokens.peek() {
+            if tok == &Token::Comma {
+                self.tokens.next();
+                args.push(self.parse_assignment_expr());
+            } else {
+                break;
+            }
+        }
+
+        args
+    }
+
+    fn parse_member_expr(&mut self) -> Expr {
+        use std::process::exit;
+
+        let mut obj = self.parse_primary_expr();
+
+        while let Some(tok) = self.tokens.peek() {
+            if tok == &Token::Dot || tok == &Token::OpenBracket {
+                let op = self.tokens.next().unwrap();
+                let property: Expr;
+                let computed: bool;
+
+                if op == Token::Dot {
+                    computed = false;
+                    property = self.parse_primary_expr();
+
+                    if !matches!(property, Expr::Identifier(_)) {
+                        eprintln!(
+                            "Cannot use dot operator without right hand side being an identifier"
+                        );
+                        exit(1);
+                    }
+                } else {
+                    computed = true;
+                    property = self.parse_expr();
+                    self.expect(|tok| tok == &Token::CloseBracket, "a closing bracket");
+                }
+
+                obj = Expr::Member {
+                    object: Box::new(obj),
+                    property: Box::new(property),
+                    computed,
+                };
+            } else {
+                break;
+            }
+        }
+
+        obj
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_var_decl_without_hanging() {
+        let mut parser = Parser::new();
+        let program = parser.produce_ast("const foo = 46;").unwrap();
+
+        assert_eq!(program.statements.len(), 1);
+    }
+
+    #[test]
+    fn parses_member_expression_without_hanging() {
+        let mut parser = Parser::new();
+        let program = parser.produce_ast("foo.bar").unwrap();
+
+        assert_eq!(program.statements.len(), 1);
+    }
+
+    #[test]
+    fn parses_call_expression_without_panicking() {
+        let mut parser = Parser::new();
+        let program = parser.produce_ast("foo();").unwrap();
+
+        assert_eq!(program.statements.len(), 1);
+    }
+
+    #[test]
+    fn parses_call_expression_with_arguments() {
+        let mut parser = Parser::new();
+        let program = parser.produce_ast("foo(1, 2 + 3);").unwrap();
+
+        assert_eq!(program.statements.len(), 1);
     }
 }

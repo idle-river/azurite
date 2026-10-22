@@ -27,6 +27,15 @@ pub enum Expr {
         assigne: Box<Expr>,
         value: Box<Expr>,
     },
+    Member {
+        object: Box<Expr>,
+        property: Box<Expr>,
+        computed: bool,
+    },
+    Call {
+        args: Vec<Box<Expr>>,
+        calle: Box<Expr>,
+    },
     Identifier(String),
     FloatingNumber(f64),
     Integer(i32),

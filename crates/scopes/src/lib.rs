@@ -116,7 +116,7 @@ impl Scope {
         let mut current = Some(self);
 
         while let Some(scope) = current {
-            if let Some(_) = scope.variables.get(name) {
+            if scope.variables.contains_key(name) {
                 return Ok(scope);
             }
 
