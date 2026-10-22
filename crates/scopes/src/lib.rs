@@ -1,8 +1,10 @@
 mod values;
 
 use std::collections::{HashMap, HashSet};
-pub use values::RuntimeVal;
+pub use values::{FunctionCall, RuntimeVal};
 
+#[derive(Debug, Clone, PartialEq)]
+// Runtime Variables
 pub struct Scope {
     parent: Option<Box<Scope>>,
     variables: HashMap<String, RuntimeVal>,
@@ -56,9 +58,19 @@ impl Scope {
             constants: HashSet::new(),
         };
 
+        // Runtime Variables
         declare_variable!(env, "true", RuntimeVal::Boolean(true), true);
         declare_variable!(env, "false", RuntimeVal::Boolean(false), true);
         declare_variable!(env, "null", RuntimeVal::Null, true);
+
+        // Native Functions
+        declare_native_fn!(env, "print", |args, _scope| {
+            for arg in args {
+                println!("{}", arg);
+            }
+
+            RuntimeVal::Null
+        });
 
         env
     }
@@ -92,6 +104,22 @@ impl Scope {
                 variable_name: entry.key().clone(),
                 declared_value: entry.get().clone(),
             }),
+        }
+    }
+
+    // Making a new native (builtin) function
+    pub fn declare_native_fn(
+        &mut self,
+        name: &str,
+        func: FunctionCall,
+        constant: bool,
+    ) -> Result<(), ScopeError> {
+        let value = RuntimeVal::NativeFn(func);
+
+        if constant {
+            self.declare_const_var(name.to_string(), value)
+        } else {
+            self.declare_var(name.to_string(), value)
         }
     }
 
@@ -138,6 +166,24 @@ macro_rules! declare_variable {
         } else {
             $env.declare_var($ident.to_string(), $t).unwrap()
         }
+    }};
+}
+
+#[macro_export]
+macro_rules! declare_native_fn {
+    // Constant by default, like builtins usually are
+    ($env:expr, $name:expr, |$args:ident, $scope:ident| $body:block) => {
+        $crate::declare_native_fn!($env, $name, |$args, $scope| $body, true)
+    };
+    ($env:expr, $name:expr, |$args:ident, $scope:ident| $body:block, $constant:expr) => {{
+        $env.declare_native_fn(
+            $name,
+            |$args: Vec<$crate::RuntimeVal>, $scope: &mut $crate::Scope| -> $crate::RuntimeVal {
+                $body
+            },
+            $constant,
+        )
+        .unwrap()
     }};
 }
 
