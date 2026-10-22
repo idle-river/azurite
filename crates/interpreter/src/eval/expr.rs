@@ -1,4 +1,6 @@
-use crate::eval::{evaluate_assign_expr, evaluate_binary_expr, evaluate_object_expr};
+use crate::eval::{
+    eval_call_expr, evaluate_assign_expr, evaluate_binary_expr, evaluate_object_expr,
+};
 use ast::Expr;
 use scopes::{RuntimeVal, Scope};
 
@@ -12,7 +14,8 @@ pub(crate) fn evaluate_expr(expr: Expr, env: &mut Scope) -> RuntimeVal {
         Expr::Object(props) => {
             evaluate_object_expr(props.iter().map(|p| *p.clone()).collect(), env)
         }
+        Expr::Call { .. } => eval_call_expr(expr, env),
         Expr::Properties { .. } => unreachable!(),
-        Expr::Member { .. } | Expr::Call { .. } => todo!(),
+        Expr::Member { .. } => todo!(),
     }
 }

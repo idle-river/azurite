@@ -27,9 +27,7 @@ fn main() {
             let mut global_env = Scope::global();
 
             let ast = parser.produce_ast(&content).unwrap();
-            let res = evaluate(ast, &mut global_env);
-
-            println!("{:?}", res);
+            evaluate(ast, &mut global_env);
         }
 
         None => repl(),

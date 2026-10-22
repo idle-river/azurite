@@ -108,19 +108,11 @@ impl Scope {
     }
 
     // Making a new native (builtin) function
-    pub fn declare_native_fn(
-        &mut self,
-        name: &str,
-        func: FunctionCall,
-        constant: bool,
-    ) -> Result<(), ScopeError> {
+    pub fn declare_native_fn(&mut self, name: &str, func: FunctionCall) -> Result<(), ScopeError> {
         let value = RuntimeVal::NativeFn(func);
 
-        if constant {
-            self.declare_const_var(name.to_string(), value)
-        } else {
-            self.declare_var(name.to_string(), value)
-        }
+        self.declare_const_var(name.to_string(), value)?;
+        Ok(())
     }
 
     // Assigning to an already existing variable
@@ -171,17 +163,12 @@ macro_rules! declare_variable {
 
 #[macro_export]
 macro_rules! declare_native_fn {
-    // Constant by default, like builtins usually are
-    ($env:expr, $name:expr, |$args:ident, $scope:ident| $body:block) => {
-        $crate::declare_native_fn!($env, $name, |$args, $scope| $body, true)
-    };
-    ($env:expr, $name:expr, |$args:ident, $scope:ident| $body:block, $constant:expr) => {{
+    ($env:expr, $name:expr, |$args:ident, $scope:ident| $body:block) => {{
         $env.declare_native_fn(
             $name,
             |$args: Vec<$crate::RuntimeVal>, $scope: &mut $crate::Scope| -> $crate::RuntimeVal {
                 $body
             },
-            $constant,
         )
         .unwrap()
     }};
