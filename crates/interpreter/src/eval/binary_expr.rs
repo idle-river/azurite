@@ -1,6 +1,6 @@
 use crate::eval::evaluate_expr;
 use ast::{BinaryOp, Expr};
-use scopes::{RuntimeVal, Scope};
+use scopes::{Env, RuntimeVal};
 
 macro_rules! arith {
     ($lhs:expr, $rhs:expr, $op:tt) => {
@@ -18,7 +18,7 @@ pub(crate) fn evaluate_binary_expr(
     left: Expr,
     op: BinaryOp,
     right: Expr,
-    env: &mut Scope,
+    env: &Env,
 ) -> RuntimeVal {
     let lhs = evaluate_expr(left, env);
     let rhs = evaluate_expr(right, env);

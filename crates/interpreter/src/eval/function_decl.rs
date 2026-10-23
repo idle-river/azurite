@@ -1,28 +1,28 @@
+use std::rc::Rc;
+
 use ast::Stmt;
-use scopes::{RuntimeVal, Scope};
+use scopes::{Closure, Env, RuntimeVal};
 
-use crate::eval::evaluate_stmt;
-
-pub fn eval_function_decl(func: Stmt, env: &mut Scope) -> RuntimeVal {
+pub fn eval_function_decl(func: Stmt, env: &Env) -> RuntimeVal {
     let Stmt::FunctionDeclaration {
         parameters,
         name,
         body,
-        is_async,
+        is_async: _,
     } = func
     else {
         unreachable!()
     };
 
-    let body: Vec<RuntimeVal> = body
-        .iter()
-        .map(|s| evaluate_stmt(*s.clone(), env))
-        .collect();
-
-    RuntimeVal::Function {
-        name,
+    let value = RuntimeVal::Function(Rc::new(Closure {
+        name: name.clone(),
         parameters,
-        dec_env: env,
+        dec_env: Rc::clone(env),
         body,
-    }
+    }));
+
+    env.borrow_mut()
+        .declare_const_var(name.clone(), value)
+        .unwrap();
+    env.borrow().lookup_var(&name).unwrap()
 }

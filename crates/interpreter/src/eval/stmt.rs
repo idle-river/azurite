@@ -1,8 +1,8 @@
 use crate::eval::{eval_function_decl, eval_var_decl, evaluate_expr};
 use ast::Stmt;
-use scopes::{RuntimeVal, Scope};
+use scopes::{Env, RuntimeVal};
 
-pub(crate) fn evaluate_stmt(stmt: Stmt, env: &mut Scope) -> RuntimeVal {
+pub(crate) fn evaluate_stmt(stmt: Stmt, env: &Env) -> RuntimeVal {
     match stmt {
         Stmt::Expr(expr) => evaluate_expr(expr, env),
         Stmt::VarDecl {

@@ -1,12 +1,18 @@
 mod values;
 
+use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
-pub use values::{FunctionCall, RuntimeVal};
+use std::rc::Rc;
+pub use values::{Closure, FunctionCall, RuntimeVal};
 
-#[derive(Debug, Clone, PartialEq)]
+/// A shared, mutable handle to a scope. Cloning it clones the handle (cheap),
+/// not the scope, which is what lets closures keep their declaring scope alive.
+pub type Env = Rc<RefCell<Scope>>;
+
+#[derive(Debug)]
 // Runtime Variables
 pub struct Scope {
-    parent: Option<Box<Scope>>,
+    parent: Option<Env>,
     variables: HashMap<String, RuntimeVal>,
     constants: HashSet<String>,
 }
@@ -43,15 +49,16 @@ impl std::fmt::Display for ScopeError {
 impl std::error::Error for ScopeError {}
 
 impl Scope {
-    pub fn new(parent: Box<Scope>) -> Self {
-        Self {
-            parent: Some(parent),
+    /// A new, empty scope whose parent is `parent`.
+    pub fn child(parent: &Env) -> Env {
+        Rc::new(RefCell::new(Self {
+            parent: Some(Rc::clone(parent)),
             variables: HashMap::new(),
             constants: HashSet::new(),
-        }
+        }))
     }
 
-    pub fn global() -> Self {
+    pub fn global() -> Env {
         let mut env = Self {
             parent: None,
             variables: HashMap::new(),
@@ -72,7 +79,7 @@ impl Scope {
             RuntimeVal::Null
         });
 
-        env
+        Rc::new(RefCell::new(env))
     }
 
     // Making a new variable
@@ -115,35 +122,33 @@ impl Scope {
         Ok(())
     }
 
-    // Assigning to an already existing variable
+    // Assigning to an already existing variable. Walks up the parent chain to
+    // find the scope that owns the variable.
     pub fn assign_var(&mut self, name: String, value: RuntimeVal) -> Result<(), ScopeError> {
-        let old_env = self.resolve(&name)?;
-        if old_env.constants.contains(&name) {
-            Err(ScopeError::ReassignConstantError(name))
-        } else {
-            *old_env.variables.get_mut(&name).unwrap() = value;
-
-            Ok(())
-        }
-    }
-
-    pub fn lookup_var(&mut self, name: String) -> Result<&RuntimeVal, ScopeError> {
-        let old_env = self.resolve(&name)?;
-        Ok(old_env.variables.get(&name).unwrap())
-    }
-
-    pub fn resolve(&mut self, name: &str) -> Result<&mut Scope, ScopeError> {
-        let mut current = Some(self);
-
-        while let Some(scope) = current {
-            if scope.variables.contains_key(name) {
-                return Ok(scope);
+        if self.variables.contains_key(&name) {
+            if self.constants.contains(&name) {
+                return Err(ScopeError::ReassignConstantError(name));
             }
 
-            current = scope.parent.as_deref_mut();
+            self.variables.insert(name, value);
+            Ok(())
+        } else if let Some(parent) = &self.parent {
+            parent.borrow_mut().assign_var(name, value)
+        } else {
+            Err(ScopeError::VariableDoesNotExist(name))
+        }
+    }
+
+    // Returns an owned value: a reference can't outlive the RefCell borrow guard.
+    pub fn lookup_var(&self, name: &str) -> Result<RuntimeVal, ScopeError> {
+        if let Some(value) = self.variables.get(name) {
+            return Ok(value.clone());
         }
 
-        Err(ScopeError::VariableDoesNotExist(name.to_string()))
+        match &self.parent {
+            Some(parent) => parent.borrow().lookup_var(name),
+            None => Err(ScopeError::VariableDoesNotExist(name.to_string())),
+        }
     }
 }
 
@@ -166,9 +171,7 @@ macro_rules! declare_native_fn {
     ($env:expr, $name:expr, |$args:ident, $scope:ident| $body:block) => {{
         $env.declare_native_fn(
             $name,
-            |$args: Vec<$crate::RuntimeVal>, $scope: &mut $crate::Scope| -> $crate::RuntimeVal {
-                $body
-            },
+            |$args: Vec<$crate::RuntimeVal>, $scope: &$crate::Env| -> $crate::RuntimeVal { $body },
         )
         .unwrap()
     }};

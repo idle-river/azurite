@@ -22,12 +22,12 @@ fn main() {
                     process::exit(1);
                 }
             };
-
+j
             let mut parser = Parser::new();
-            let mut global_env = Scope::global();
+            let global_env = Scope::global();
 
             let ast = parser.produce_ast(&content).unwrap();
-            evaluate(ast, &mut global_env);
+            evaluate(ast, &global_env);
         }
 
         None => repl(),
@@ -36,7 +36,7 @@ fn main() {
 
 fn repl() {
     use std::io::{self, Write};
-    let mut global_env = Scope::global();
+    let global_env = Scope::global();
     let mut parser = Parser::new();
 
     println!("Azurite REPL v1.0");
@@ -75,7 +75,7 @@ fn repl() {
             }
         };
 
-        let res = evaluate(ast, &mut global_env);
+        let res = evaluate(ast, &global_env);
 
         println!("Result: {:?}", res);
     }

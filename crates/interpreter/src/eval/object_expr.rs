@@ -2,9 +2,9 @@ use std::collections::HashMap;
 
 use crate::eval::evaluate_expr;
 use ast::Expr;
-use scopes::{RuntimeVal, Scope};
+use scopes::{Env, RuntimeVal};
 
-pub fn evaluate_object_expr(props: Vec<Expr>, env: &mut Scope) -> RuntimeVal {
+pub fn evaluate_object_expr(props: Vec<Expr>, env: &Env) -> RuntimeVal {
     let mut properties = HashMap::new();
 
     for prop in props {
@@ -14,7 +14,7 @@ pub fn evaluate_object_expr(props: Vec<Expr>, env: &mut Scope) -> RuntimeVal {
 
         let value = match value {
             Some(v) => evaluate_expr(*v, env),
-            None => env.lookup_var(key.clone()).unwrap().clone(),
+            None => env.borrow().lookup_var(&key).unwrap(),
         };
 
         properties.insert(key, Box::new(value));
