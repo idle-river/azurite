@@ -486,7 +486,7 @@ mod tests {
 
     #[test]
     fn unexpected_character() {
-        for bad in ["@", "$", "&", "{", "}"] {
+        for bad in ["@", "$", "&", "~", "`"] {
             let e = lex_err(bad);
             assert_eq!(e.line, 1, "input: {bad}");
             assert_eq!(e.message, format!("Unexpected character - {bad}"));
