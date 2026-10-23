@@ -1,3 +1,4 @@
+use ast::Stmt;
 use std::collections::HashMap;
 use std::fmt;
 
@@ -13,6 +14,12 @@ pub enum RuntimeVal {
     FloatingNumber(f64),
     Boolean(bool),
     Integer(i32),
+    Function {
+        name: String,
+        parameters: Vec<String>,
+        dec_env: &mut Scope,
+        body: Vec<Stmt>,
+    },
     Null,
 }
 
@@ -26,6 +33,7 @@ impl fmt::Display for RuntimeVal {
             RuntimeVal::Boolean(true) => write!(f, "true"),
             RuntimeVal::Boolean(false) => write!(f, "false"),
             RuntimeVal::Null => write!(f, "null"),
+            RuntimeVal::Function { name, .. } => write!(f, "<user-defined function: {}>", name),
             RuntimeVal::NativeFn(_) => write!(f, "<built-in function>"),
             RuntimeVal::Object(map) => {
                 write!(f, "{{")?;

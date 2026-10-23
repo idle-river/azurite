@@ -1,4 +1,4 @@
-use crate::eval::{eval_var_decl, evaluate_expr};
+use crate::eval::{eval_function_decl, eval_var_decl, evaluate_expr};
 use ast::Stmt;
 use scopes::{RuntimeVal, Scope};
 
@@ -10,9 +10,6 @@ pub(crate) fn evaluate_stmt(stmt: Stmt, env: &mut Scope) -> RuntimeVal {
             identifier,
             value,
         } => eval_var_decl(constant, identifier, value, env),
-        s @ Stmt::FunctionDeclaration { .. } => {
-            println!("Functions are not supported: {:#?}", s);
-            todo!()
-        }
+        Stmt::FunctionDeclaration { .. } => eval_function_decl(stmt, env),
     }
 }
