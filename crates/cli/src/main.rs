@@ -22,7 +22,7 @@ fn main() {
                     process::exit(1);
                 }
             };
-j
+
             let mut parser = Parser::new();
             let global_env = Scope::global();
 
