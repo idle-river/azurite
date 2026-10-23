@@ -12,6 +12,7 @@ pub enum Token {
     // Keywords
     Let,
     Const,
+    Fn,
 
     // Syntax
     OpenParen,
@@ -170,6 +171,7 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, InterpreterError> {
                 match ident.as_str() {
                     "let" => Token::Let,
                     "const" => Token::Const,
+                    "fn" => Token::Fn,
                     _ => Token::Identifier(ident),
                 }
             }

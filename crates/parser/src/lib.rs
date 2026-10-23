@@ -1,6 +1,6 @@
 use ast::{BinaryOp, Expr, Program, Stmt};
 use lexer::{Token, tokenize};
-use std::{iter::Peekable, vec::IntoIter};
+use std::{iter::Peekable, process, vec::IntoIter};
 
 pub struct Parser {
     pub tokens: Peekable<IntoIter<Token>>,
@@ -56,6 +56,7 @@ impl Parser {
         let tk = self.tokens.peek().unwrap();
         match tk {
             Token::Let | Token::Const => self.parse_var_decl(),
+            Token::Fn => self.parse_fn_decl(),
             _ => {
                 let expr = self.parse_expr();
                 if Some(&Token::Semicolon) == self.tokens.peek() {
@@ -63,6 +64,60 @@ impl Parser {
                 }
                 Stmt::Expr(expr)
             }
+        }
+    }
+
+    fn parse_fn_decl(&mut self) -> Stmt {
+        self.tokens.next(); // eat fn
+        let Token::Identifier(name) = self.expect(
+            |tok| matches!(tok, &Token::Identifier(_)),
+            "a function name",
+        ) else {
+            unreachable!()
+        };
+
+        let args = self.parse_args();
+        let params: Vec<String> = args
+            .iter()
+            .map(|arg| {
+                let Expr::Identifier(ident) = arg else {
+                    eprintln!(
+                        "Inside function decleration expected paramters to be a type of string"
+                    );
+                    process::exit(1);
+                };
+
+                ident.clone()
+            })
+            .collect();
+
+        self.expect(
+            |tok| tok == &Token::OpenBrace,
+            "an opening bracket for function body",
+        );
+
+        let mut body: Vec<Stmt> = vec![];
+
+        while let Some(t) = self.tokens.peek() {
+            if t == &Token::EOF || t == &Token::CloseBrace {
+                break;
+            }
+
+            body.push(self.parse_stmt());
+        }
+
+        let body: Vec<Box<Stmt>> = body.iter().map(|s| Box::new(s.clone())).collect();
+
+        self.expect(
+            |tok| tok == &Token::CloseBrace,
+            "a closing bracket for function body",
+        );
+
+        Stmt::FunctionDeclaration {
+            parameters: params,
+            name,
+            body,
+            is_async: false,
         }
     }
 
@@ -173,10 +228,7 @@ impl Parser {
 
             _ => {
                 eprintln!("Unexpected token found during parsing: {:?}", tk);
-                for tok in self.tokens.by_ref() {
-                    println!("Token: {:#?}", tok);
-                }
-                unimplemented!()
+                process::exit(1);
             }
         }
     }

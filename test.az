@@ -1,3 +1,5 @@
-const foo = 99;
+fn add(x, y) {
+    x + y
+}
 
-print(foo, 45);
+print(add(4, 5));

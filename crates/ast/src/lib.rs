@@ -11,6 +11,12 @@ pub enum Stmt {
         identifier: String,
         value: Expr,
     },
+    FunctionDeclaration {
+        parameters: Vec<String>,
+        name: String,
+        body: Vec<Box<Stmt>>,
+        is_async: bool,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq)]

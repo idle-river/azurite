@@ -10,5 +10,9 @@ pub(crate) fn evaluate_stmt(stmt: Stmt, env: &mut Scope) -> RuntimeVal {
             identifier,
             value,
         } => eval_var_decl(constant, identifier, value, env),
+        s @ Stmt::FunctionDeclaration { .. } => {
+            println!("Functions are not supported: {:#?}", s);
+            todo!()
+        }
     }
 }
