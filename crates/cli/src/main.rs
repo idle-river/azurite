@@ -1,4 +1,5 @@
-#[tokio::main]
-async fn main() {
-    println!("{}", starter_core::add(1, 2))
+use lexer::tokenize;
+
+fn main() {
+    println!("{:#?}", tokenize("let x = 45;").unwrap());
 }
