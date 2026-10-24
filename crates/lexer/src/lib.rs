@@ -24,7 +24,7 @@ pub enum Token {
 
 pub fn tokenize(src: &str) -> Result<Vec<Token>, LexerError> {
     let mut tokens = Vec::new();
-    let mut current_line = 0u16;
+    let mut current_line = 1u16;
     let mut src = src.chars().peekable();
 
     while let Some(tok) = src.next() {
