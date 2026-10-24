@@ -76,6 +76,18 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, LexerError> {
                 continue;
             }
 
+            // Comments
+            '#' => {
+                while let Some(c) = src.next() {
+                    if c == '\n' {
+                        break;
+                    }
+                }
+
+                current_line += 1;
+                continue;
+            }
+
             _ => {
                 return Err(LexerError::UnknownCharacter(current_line, tok));
             }
@@ -115,5 +127,29 @@ mod tests {
                 Token::EOF
             ]
         );
+    }
+
+    #[test]
+    fn comments() {
+        let tokens = tokenize("# let y = 45;\nlet x = 45;").unwrap();
+
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Let,
+                Token::Identifier("x".to_string()),
+                Token::Equals,
+                Token::Number("45".to_string()),
+                Token::Semicolon,
+                Token::EOF
+            ]
+        );
+    }
+
+    #[test]
+    fn invalid_token() {
+        let tokens = tokenize("@");
+
+        assert!(tokens.is_err());
     }
 }
