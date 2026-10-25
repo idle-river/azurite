@@ -1,6 +1,6 @@
 mod error;
 
-use ast::{Expr, Program, Stmt};
+use ast::{BinaryOp, Expr, Program, Stmt};
 use error::ParserError;
 use lexer::Token;
 use std::{iter::Peekable, vec::IntoIter};
@@ -53,17 +53,21 @@ impl Parser {
         self.tokens.peek()
     }
 
-    fn expect<F: FnOnce(&Token) -> bool>(&mut self, predicate: F, expected: &str) -> Token {
-        use std::process;
-        let tk = self.eat().unwrap();
-        if predicate(&tk) {
-            tk
-        } else {
-            eprintln!(
-                "[line {}] expected a {}, but got {:?}",
-                self.current_line, expected, tk
-            );
-            process::exit(1);
+    fn expect<F>(&mut self, predicate: F, expected: &str) -> Result<Token, ParserError>
+    where
+        F: FnOnce(&Token) -> bool,
+    {
+        // Getting it rn so that we don't borrow twice inside the match
+        let current_line = self.current_line;
+
+        match self.peek() {
+            Some(tk) if predicate(tk) => Ok(self.eat().unwrap()),
+            Some(tk) => Err(ParserError::ExpectedToken(
+                current_line,
+                expected.to_string(),
+                tk.clone(),
+            )),
+            None => Err(ParserError::UnexpectedEof(current_line)),
         }
     }
 
@@ -75,19 +79,76 @@ impl Parser {
     }
 
     fn parse_expr(&mut self) -> Result<Expr, ParserError> {
-        self.parse_primary_expr()
+        self.parse_additive_expr()
+    }
+
+    fn parse_additive_expr(&mut self) -> Result<Expr, ParserError> {
+        let mut left = self.parse_multiplicitive_expr()?;
+
+        while let Some(Token::BinaryOp(op)) = self.peek() {
+            if *op != '+' && *op != '-' {
+                break;
+            }
+
+            let Token::BinaryOp(op) = self.eat().unwrap() else {
+                unreachable!()
+            };
+
+            let right = self.parse_multiplicitive_expr()?;
+
+            left = Expr::Binary {
+                op: BinaryOp::new(op),
+                left: Box::new(left),
+                right: Box::new(right),
+            };
+        }
+
+        Ok(left)
+    }
+
+    fn parse_multiplicitive_expr(&mut self) -> Result<Expr, ParserError> {
+        let mut left = self.parse_primary_expr()?;
+
+        while let Some(Token::BinaryOp(op)) = self.peek() {
+            if *op != '*' && *op != '/' && *op != '%' {
+                break;
+            }
+
+            let Token::BinaryOp(op) = self.eat().unwrap() else {
+                unreachable!()
+            };
+
+            let right = self.parse_primary_expr()?;
+
+            left = Expr::Binary {
+                op: BinaryOp::new(op),
+                left: Box::new(left),
+                right: Box::new(right),
+            };
+        }
+
+        Ok(left)
     }
 
     fn parse_primary_expr(&mut self) -> Result<Expr, ParserError> {
-        let tk = self.eat().unwrap();
+        let tk = self
+            .eat()
+            .ok_or(ParserError::UnexpectedEof(self.current_line))?;
 
         match tk {
             Token::Identifier(ident) => Ok(Expr::Identifier(ident)),
-            Token::Number(num) => Ok(Expr::Number(num.parse::<f64>().unwrap())),
+            Token::Number(num) => {
+                let value = num
+                    .parse::<f64>()
+                    .map_err(|_| ParserError::InvalidNumber(self.current_line, num.clone()))?;
+
+                Ok(Expr::Number(value))
+            }
             Token::LeftParen => {
-                let value = self.parse_expr();
-                self.expect(|tok| tok == &Token::RightParen, "a closing paren");
-                value
+                let value = self.parse_expr()?;
+                self.expect(|tok| tok == &Token::RightParen, "a right paren")?;
+
+                Ok(value)
             }
 
             _ => Err(ParserError::UnknownToken(self.current_line, tk)),

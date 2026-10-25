@@ -34,7 +34,7 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, LexerError> {
             '=' => Token::Equals,
             '+' | '-' | '/' | '*' | '%' | '^' => Token::BinaryOp(tok),
             '(' => Token::LeftParen,
-            ')' => Token::LeftParen,
+            ')' => Token::RightParen,
             ';' => Token::Semicolon,
 
             // Functional Matching
@@ -80,7 +80,7 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, LexerError> {
 
             // Comments
             '#' => {
-                while let Some(c) = src.next() {
+                for c in src.by_ref() {
                     if c == '\n' {
                         break;
                     }
