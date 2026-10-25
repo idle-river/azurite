@@ -1,4 +1,3 @@
-#[allow(unused_imports)]
 use interpreter::evaluate;
 use lexer::tokenize;
 use parser::Parser;
@@ -40,7 +39,7 @@ fn repl() {
 }
 
 fn generate(contents: &str, parser: &mut Parser) {
-    let tokens = match tokenize(&contents) {
+    let tokens = match tokenize(contents) {
         Ok(tokens) => tokens,
         Err(err) => {
             eprintln!("{err}");
@@ -55,13 +54,12 @@ fn generate(contents: &str, parser: &mut Parser) {
             process::exit(1);
         }
     };
-    println!("{ast:#?}");
 
-    // match evaluate(ast) {
-    //     Ok(v) => println!("{v}"),
-    //     Err(err) => {
-    //         eprintln!("{err}");
-    //         process::exit(1);
-    //     }
-    // };
+    match evaluate(ast) {
+        Ok(v) => println!("{v}"),
+        Err(err) => {
+            eprintln!("{err}");
+            process::exit(1);
+        }
+    };
 }

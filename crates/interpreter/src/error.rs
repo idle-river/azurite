@@ -1,10 +1,12 @@
 use std::{error::Error, fmt::Display};
 
+use crate::RuntimeVal;
 use ast::Stmt;
 
 #[derive(Debug, Clone)]
 pub enum InterpreterError {
     NoNodeInterpretation(Stmt),
+    DivideByZero(RuntimeVal), // assuming rhs is zero
 }
 
 impl Error for InterpreterError {}
@@ -18,6 +20,7 @@ impl Display for InterpreterError {
                 "This AST node: {:#?} does not have interpretation set up yet.",
                 s
             ),
+            DivideByZero(lhs) => write!(f, "Cannot divide {} / 0", lhs),
         }
     }
 }

@@ -72,10 +72,7 @@ impl Parser {
     }
 
     fn parse_stmt(&mut self) -> Result<Stmt, ParserError> {
-        let tk = self.peek().unwrap();
-        match tk {
-            _ => Ok(Stmt::Expression(self.parse_expr()?)),
-        }
+        Ok(Stmt::Expression(self.parse_expr()?))
     }
 
     fn parse_expr(&mut self) -> Result<Expr, ParserError> {
