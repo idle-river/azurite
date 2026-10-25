@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 lexer = { workspace = true }
 parser = { workspace = true }
+interpreter = { workspace = true }

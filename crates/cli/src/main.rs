@@ -1,3 +1,4 @@
+use interpreter::evaluate;
 use lexer::tokenize;
 use parser::Parser;
 use std::{fs, process};
@@ -46,8 +47,19 @@ fn generate(contents: &str, parser: &mut Parser) {
         }
     };
 
-    match parser.parse(tokens) {
-        Ok(ast) => println!("{:#?}", ast),
-        Err(err) => println!("{err}"),
+    let ast = match parser.parse(tokens) {
+        Ok(ast) => ast,
+        Err(err) => {
+            eprintln!("{err}");
+            process::exit(1);
+        }
+    };
+
+    match evaluate(ast) {
+        Ok(v) => println!("{v}"),
+        Err(err) => {
+            eprintln!("{err}");
+            process::exit(1);
+        }
     };
 }
