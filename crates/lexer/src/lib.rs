@@ -20,6 +20,7 @@ pub enum Token {
 
     // Other
     EOF,
+    NewLine,
 }
 
 pub fn tokenize(src: &str) -> Result<Vec<Token>, LexerError> {
@@ -71,9 +72,10 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, LexerError> {
             c if c.is_whitespace() => {
                 if c == '\n' {
                     current_line += 1;
+                    Token::NewLine
+                } else {
+                    continue;
                 }
-
-                continue;
             }
 
             // Comments
