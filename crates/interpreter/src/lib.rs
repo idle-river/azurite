@@ -16,7 +16,11 @@ pub fn evaluate(prog: Program, scope: &mut Scope) -> Result<RuntimeVal, Interpre
 fn eval_stmt(stmt: Stmt, scope: &mut Scope) -> Result<RuntimeVal, InterpreterError> {
     match stmt {
         Stmt::Expression(expr) => eval_expr(expr, scope),
-        Stmt::VariableDecleration { .. } => Err(InterpreterError::NoNodeInterpretation(stmt)),
+        Stmt::VariableDecleration {
+            identifier,
+            value,
+            is_constant,
+        } => eval_variable_decl(identifier, value, is_constant, scope),
     }
 }
 
@@ -64,4 +68,19 @@ fn eval_binary_expr(
         BinaryOp::Modulo => lval % rval,
         BinaryOp::Exponent => lval.powf(rval),
     }))
+}
+
+fn eval_variable_decl(
+    ident: String,
+    value: Expr,
+    constant: bool,
+    scope: &mut Scope,
+) -> Result<RuntimeVal, InterpreterError> {
+    let evaled = eval_expr(value, scope)?;
+
+    scope
+        .declare_variable(ident.clone(), evaled, constant)
+        .map_err(|_| InterpreterError::VariableAlreadyDefined(ident))?;
+
+    Ok(RuntimeVal::Null)
 }

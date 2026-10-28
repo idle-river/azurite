@@ -9,6 +9,7 @@ pub enum InterpreterError {
     DivideByZero(RuntimeVal), // assuming rhs is zero
     InvalidTypes(RuntimeVal, RuntimeVal),
     ValNotFound(String),
+    VariableAlreadyDefined(String),
 }
 
 impl Error for InterpreterError {}
@@ -25,6 +26,9 @@ impl Display for InterpreterError {
             DivideByZero(lhs) => write!(f, "Cannot divide {} / 0", lhs),
             InvalidTypes(lhs, rhs) => write!(f, "Cannot do a binary expr for {} on a {}", rhs, lhs),
             ValNotFound(ident) => write!(f, "{} not found", ident),
+            VariableAlreadyDefined(ident) => {
+                write!(f, "{} is already defined", ident)
+            }
         }
     }
 }
