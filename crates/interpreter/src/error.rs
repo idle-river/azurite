@@ -7,6 +7,7 @@ use ast::Stmt;
 pub enum InterpreterError {
     NoNodeInterpretation(Stmt),
     DivideByZero(RuntimeVal), // assuming rhs is zero
+    InvalidTypes(RuntimeVal, RuntimeVal),
 }
 
 impl Error for InterpreterError {}
@@ -21,6 +22,7 @@ impl Display for InterpreterError {
                 s
             ),
             DivideByZero(lhs) => write!(f, "Cannot divide {} / 0", lhs),
+            InvalidTypes(lhs, rhs) => write!(f, "Cannot do a binary expr for {} on a {}", rhs, lhs),
         }
     }
 }

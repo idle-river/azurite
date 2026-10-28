@@ -7,4 +7,5 @@ cli = { path = "./crates/cli" }
 lexer = { path = "./crates/lexer" }
 ast = { path = "./crates/ast" }
 parser = { path = "./crates/parser" }
+scopes = { path = "./crates/scopes" }
 interpreter = { path = "./crates/interpreter" }

@@ -20,6 +20,7 @@ name = "interpreter"
 version = "0.1.0"
 dependencies = [
  "ast",
+ "scopes",
 ]
 
 [[package]]
@@ -33,3 +34,7 @@ dependencies = [
  "ast",
  "lexer",
 ]
+
+[[package]]
+name = "scopes"
+version = "0.1.0"

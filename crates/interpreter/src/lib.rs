@@ -1,9 +1,8 @@
 mod error;
-mod values;
+use scopes::RuntimeVal;
 
 use ast::{BinaryOp, Expr, Program, Stmt};
 use error::InterpreterError;
-pub use values::RuntimeVal;
 
 pub fn evaluate(prog: Program) -> Result<RuntimeVal, InterpreterError> {
     let mut last_eval = RuntimeVal::Null;
@@ -39,10 +38,10 @@ fn eval_binary_expr(op: BinaryOp, left: Expr, right: Expr) -> Result<RuntimeVal,
     }
 
     let RuntimeVal::Number(lval) = lhs else {
-        unreachable!();
+        return Err(InterpreterError::InvalidTypes(lhs, rhs));
     };
     let RuntimeVal::Number(rval) = rhs else {
-        unreachable!();
+        return Err(InterpreterError::InvalidTypes(lhs, rhs));
     };
 
     Ok(RuntimeVal::Number(match op {
