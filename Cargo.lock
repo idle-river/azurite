@@ -13,6 +13,7 @@ dependencies = [
  "interpreter",
  "lexer",
  "parser",
+ "scopes",
 ]
 
 [[package]]

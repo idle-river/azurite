@@ -1,37 +1,45 @@
 mod error;
-use scopes::RuntimeVal;
+use scopes::{RuntimeVal, Scope};
 
 use ast::{BinaryOp, Expr, Program, Stmt};
 use error::InterpreterError;
 
-pub fn evaluate(prog: Program) -> Result<RuntimeVal, InterpreterError> {
+pub fn evaluate(prog: Program, scope: &mut Scope) -> Result<RuntimeVal, InterpreterError> {
     let mut last_eval = RuntimeVal::Null;
     for stmt in prog.body {
-        last_eval = eval_stmt(stmt)?;
+        last_eval = eval_stmt(stmt, scope)?;
     }
 
     Ok(last_eval)
 }
 
-fn eval_stmt(stmt: Stmt) -> Result<RuntimeVal, InterpreterError> {
+fn eval_stmt(stmt: Stmt, scope: &mut Scope) -> Result<RuntimeVal, InterpreterError> {
     match stmt {
-        Stmt::Expression(expr) => eval_expr(expr),
+        Stmt::Expression(expr) => eval_expr(expr, scope),
     }
 }
 
-fn eval_expr(expr: Expr) -> Result<RuntimeVal, InterpreterError> {
+fn eval_expr(expr: Expr, scope: &mut Scope) -> Result<RuntimeVal, InterpreterError> {
     match expr {
         Expr::Number(num) => Ok(RuntimeVal::Number(num)),
-        Expr::Binary { op, left, right } => eval_binary_expr(op, *left, *right),
-        _ => Err(InterpreterError::NoNodeInterpretation(Stmt::Expression(
-            expr,
-        ))),
+        Expr::Binary { op, left, right } => eval_binary_expr(op, *left, *right, scope),
+        Expr::Identifier(ident) => scope
+            .lookup_variable(&ident)
+            .ok_or(InterpreterError::ValNotFound(ident)),
+        // _ => Err(InterpreterError::NoNodeInterpretation(Stmt::Expression(
+        //     expr,
+        // ))),
     }
 }
 
-fn eval_binary_expr(op: BinaryOp, left: Expr, right: Expr) -> Result<RuntimeVal, InterpreterError> {
-    let lhs = eval_expr(left)?;
-    let rhs = eval_expr(right)?;
+fn eval_binary_expr(
+    op: BinaryOp,
+    left: Expr,
+    right: Expr,
+    scope: &mut Scope,
+) -> Result<RuntimeVal, InterpreterError> {
+    let lhs = eval_expr(left, scope)?;
+    let rhs = eval_expr(right, scope)?;
 
     if lhs == RuntimeVal::Null || rhs == RuntimeVal::Null {
         return Ok(RuntimeVal::Null);

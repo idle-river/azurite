@@ -1,6 +1,7 @@
 use interpreter::evaluate;
 use lexer::tokenize;
 use parser::Parser;
+use scopes::Scope;
 use std::{fs, process};
 
 fn main() {
@@ -55,7 +56,10 @@ fn generate(contents: &str, parser: &mut Parser) {
         }
     };
 
-    match evaluate(ast) {
+    let mut scope = Scope::global();
+    let _ = scope.declare_variable("x".to_string(), scopes::RuntimeVal::Number(3f64), false);
+
+    match evaluate(ast, &mut scope) {
         Ok(v) => println!("{v}"),
         Err(err) => {
             eprintln!("{err}");

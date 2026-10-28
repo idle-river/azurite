@@ -8,6 +8,7 @@ pub enum InterpreterError {
     NoNodeInterpretation(Stmt),
     DivideByZero(RuntimeVal), // assuming rhs is zero
     InvalidTypes(RuntimeVal, RuntimeVal),
+    ValNotFound(String),
 }
 
 impl Error for InterpreterError {}
@@ -23,6 +24,7 @@ impl Display for InterpreterError {
             ),
             DivideByZero(lhs) => write!(f, "Cannot divide {} / 0", lhs),
             InvalidTypes(lhs, rhs) => write!(f, "Cannot do a binary expr for {} on a {}", rhs, lhs),
+            ValNotFound(ident) => write!(f, "{} not found", ident),
         }
     }
 }

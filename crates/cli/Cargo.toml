@@ -7,3 +7,4 @@ edition = "2024"
 lexer = { workspace = true }
 parser = { workspace = true }
 interpreter = { workspace = true }
+scopes = { workspace = true }
