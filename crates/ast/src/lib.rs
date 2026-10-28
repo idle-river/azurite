@@ -6,6 +6,11 @@ pub struct Program {
 #[derive(Debug, Clone)]
 pub enum Stmt {
     Expression(Expr),
+    VariableDecleration {
+        identifier: String,
+        value: Expr,
+        is_constant: bool,
+    },
 }
 
 #[derive(Debug, Clone)]

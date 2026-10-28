@@ -16,6 +16,7 @@ pub fn evaluate(prog: Program, scope: &mut Scope) -> Result<RuntimeVal, Interpre
 fn eval_stmt(stmt: Stmt, scope: &mut Scope) -> Result<RuntimeVal, InterpreterError> {
     match stmt {
         Stmt::Expression(expr) => eval_expr(expr, scope),
+        Stmt::VariableDecleration { .. } => Err(InterpreterError::NoNodeInterpretation(stmt)),
     }
 }
 
@@ -26,9 +27,6 @@ fn eval_expr(expr: Expr, scope: &mut Scope) -> Result<RuntimeVal, InterpreterErr
         Expr::Identifier(ident) => scope
             .lookup_variable(&ident)
             .ok_or(InterpreterError::ValNotFound(ident)),
-        // _ => Err(InterpreterError::NoNodeInterpretation(Stmt::Expression(
-        //     expr,
-        // ))),
     }
 }
 

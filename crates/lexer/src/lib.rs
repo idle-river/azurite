@@ -6,6 +6,7 @@ mod error;
 pub enum Token {
     // Keywords
     Let,
+    Const,
 
     // Literals
     Number(String),
@@ -66,6 +67,7 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, LexerError> {
 
                 match ident.as_ref() {
                     "let" => Token::Let,
+                    "const" => Token::Const,
                     _ => Token::Identifier(ident),
                 }
             }

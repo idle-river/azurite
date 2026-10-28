@@ -72,7 +72,38 @@ impl Parser {
     }
 
     fn parse_stmt(&mut self) -> Result<Stmt, ParserError> {
-        Ok(Stmt::Expression(self.parse_expr()?))
+        match self.peek().unwrap() {
+            Token::Let | Token::Const => Ok(self.parse_variable_decl()?),
+            _ => Ok(Stmt::Expression(self.parse_expr()?)),
+        }
+    }
+
+    fn parse_variable_decl(&mut self) -> Result<Stmt, ParserError> {
+        let decl_keyword = self.eat().unwrap();
+        let Token::Identifier(ident) = self.expect(
+            |tok| matches!(tok, Token::Identifier(_)),
+            "variable identifier",
+        )?
+        else {
+            unreachable!()
+        };
+        self.expect(|tok| tok == &Token::Equals, "equals")?;
+        let value = self.parse_expr()?;
+        self.expect(|tok| tok == &Token::Semicolon, "semicolon")?;
+
+        match decl_keyword {
+            Token::Let => Ok(Stmt::VariableDecleration {
+                identifier: ident,
+                value,
+                is_constant: false,
+            }),
+            Token::Const => Ok(Stmt::VariableDecleration {
+                identifier: ident,
+                value,
+                is_constant: true,
+            }),
+            _ => unreachable!(),
+        }
     }
 
     fn parse_expr(&mut self) -> Result<Expr, ParserError> {
