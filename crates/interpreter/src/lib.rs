@@ -1,4 +1,6 @@
 mod error;
+use std::collections::HashMap;
+
 use scopes::{RuntimeVal, Scope};
 
 use ast::{BinaryOp, Expr, Program, Stmt};
@@ -32,6 +34,11 @@ fn eval_expr(expr: Expr, scope: &mut Scope) -> Result<RuntimeVal, InterpreterErr
             .lookup_variable(&ident)
             .ok_or(InterpreterError::ValNotFound(ident)),
         Expr::Reassignment { assigne, value } => eval_reassignment_expr(*assigne, *value, scope),
+        Expr::Object(props) => {
+            let props = props.into_iter().map(|p| *p).collect();
+            eval_object_expr(props, scope)
+        }
+        Expr::Property { .. } => unreachable!(),
     }
 }
 
@@ -93,6 +100,26 @@ fn eval_reassignment_expr(
             _ => unreachable!(),
         }),
     }
+}
+
+fn eval_object_expr(props: Vec<Expr>, scope: &mut Scope) -> Result<RuntimeVal, InterpreterError> {
+    let mut val = HashMap::new();
+
+    for prop in props {
+        let Expr::Property { key, value } = prop else {
+            unreachable!()
+        };
+
+        let res = if let Some(value) = value {
+            eval_expr(*value, scope)?
+        } else {
+            unimplemented!()
+        };
+
+        val.insert(key, res);
+    }
+
+    Ok(RuntimeVal::Object(val))
 }
 
 fn eval_variable_decl(

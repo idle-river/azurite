@@ -28,15 +28,15 @@ impl Parser {
         self.tokens = tokens.into_iter().peekable();
         let mut prog = Program { body: vec![] };
 
-        while let Some(tok) = self.peek() {
+        while self.peek().is_some() {
+            self.skip_newlines();
+
+            let Some(tok) = self.peek() else {
+                break;
+            };
+
             if tok == &Token::EOF {
                 break;
-            }
-
-            if tok == &Token::NewLine {
-                self.current_line += 1;
-                self.eat();
-                continue;
             }
 
             prog.body.push(self.parse_stmt()?);
@@ -51,6 +51,13 @@ impl Parser {
 
     fn peek(&mut self) -> Option<&Token> {
         self.tokens.peek()
+    }
+
+    fn skip_newlines(&mut self) {
+        while self.peek() == Some(&Token::NewLine) {
+            self.current_line += 1;
+            self.eat();
+        }
     }
 
     fn expect<F>(&mut self, predicate: F, expected: &str) -> Result<Token, ParserError>
@@ -110,8 +117,56 @@ impl Parser {
         self.parse_assignment_expr()
     }
 
+    fn parse_object_expr(&mut self) -> Result<Expr, ParserError> {
+        if self.peek() != Some(&Token::LeftBrace) {
+            return self.parse_additive_expr();
+        }
+
+        self.eat(); // advance past left brace
+        let mut properties = Vec::new();
+        self.skip_newlines();
+
+        while let Some(tok) = self.peek()
+            && tok != &Token::RightBrace
+        {
+            let Token::Identifier(key) =
+                self.expect(|tok| matches!(tok, &Token::Identifier(_)), "an identifier")?
+            else {
+                unreachable!()
+            };
+
+            self.skip_newlines();
+
+            let prop = if Some(&Token::Colon) == self.peek() {
+                self.expect(|tok| tok == &Token::Colon, "a colon")?;
+                self.skip_newlines();
+                let val = self.parse_expr()?;
+                Expr::Property {
+                    key,
+                    value: Some(Box::new(val)),
+                }
+            } else {
+                Expr::Property { key, value: None }
+            };
+
+            properties.push(Box::new(prop));
+            self.skip_newlines();
+
+            if self.peek() == Some(&Token::Comma) {
+                self.eat();
+                self.skip_newlines();
+            } else if self.peek() != Some(&Token::RightBrace) {
+                self.expect(|tok| tok == &Token::Comma, "a comma")?;
+            }
+        }
+
+        self.expect(|tok| tok == &Token::RightBrace, "a right brace")?;
+
+        Ok(Expr::Object(properties))
+    }
+
     fn parse_assignment_expr(&mut self) -> Result<Expr, ParserError> {
-        let left = self.parse_additive_expr()?;
+        let left = self.parse_object_expr()?;
 
         if self.peek() == Some(&Token::Equals) {
             self.eat(); // advance past equals

@@ -26,6 +26,11 @@ pub enum Expr {
         assigne: Box<Expr>,
         value: Box<Expr>,
     },
+    Object(Vec<Box<Expr>>),
+    Property {
+        key: String,
+        value: Option<Box<Expr>>,
+    },
 }
 
 #[derive(Debug, Clone)]

@@ -18,6 +18,10 @@ pub enum Token {
     LeftParen,
     RightParen,
     Semicolon,
+    LeftBrace,
+    RightBrace,
+    Comma,
+    Colon,
 
     // Other
     EOF,
@@ -37,6 +41,10 @@ pub fn tokenize(src: &str) -> Result<Vec<Token>, LexerError> {
             '(' => Token::LeftParen,
             ')' => Token::RightParen,
             ';' => Token::Semicolon,
+            '{' => Token::LeftBrace,
+            '}' => Token::RightBrace,
+            ':' => Token::Colon,
+            ',' => Token::Comma,
 
             // Functional Matching
             c if c.is_numeric() => {
