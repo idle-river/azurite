@@ -1,7 +1,7 @@
 use std::{error::Error, fmt::Display};
 
 use crate::RuntimeVal;
-use ast::Stmt;
+use ast::{Expr, Stmt};
 
 #[derive(Debug, Clone)]
 pub enum InterpreterError {
@@ -10,6 +10,8 @@ pub enum InterpreterError {
     InvalidTypes(RuntimeVal, RuntimeVal),
     ValNotFound(String),
     VariableAlreadyDefined(String),
+    InvalidAssigne(Expr),
+    ConstantReassign(String),
 }
 
 impl Error for InterpreterError {}
@@ -29,6 +31,10 @@ impl Display for InterpreterError {
             VariableAlreadyDefined(ident) => {
                 write!(f, "{} is already defined", ident)
             }
+            InvalidAssigne(expr) => {
+                write!(f, "Requiring identifier for reassignment; found {expr:#?}")
+            }
+            ConstantReassign(val) => write!(f, "Reassigning constant: {val}"),
         }
     }
 }

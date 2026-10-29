@@ -6,6 +6,7 @@ use std::{fs, process};
 
 fn main() {
     let mut args = std::env::args();
+    let mut scope = Scope::global();
 
     args.next(); // eat executable
 
@@ -16,13 +17,13 @@ fn main() {
             panic!()
         });
 
-        generate(&contents, &mut parser);
+        generate(&contents, &mut parser, &mut scope);
     } else {
-        repl();
+        repl(scope);
     }
 }
 
-fn repl() {
+fn repl(mut scope: Scope) {
     use std::io::{Write, stdin, stdout};
     let mut parser = Parser::new();
 
@@ -35,11 +36,11 @@ fn repl() {
         let mut cmd = String::new();
         stdin().read_line(&mut cmd).unwrap();
 
-        generate(&cmd, &mut parser);
+        generate(&cmd, &mut parser, &mut scope);
     }
 }
 
-fn generate(contents: &str, parser: &mut Parser) {
+fn generate(contents: &str, parser: &mut Parser, scope: &mut Scope) {
     let tokens = match tokenize(contents) {
         Ok(tokens) => tokens,
         Err(err) => {
@@ -56,10 +57,7 @@ fn generate(contents: &str, parser: &mut Parser) {
         }
     };
 
-    let mut scope = Scope::global();
-    let _ = scope.declare_variable("x".to_string(), scopes::RuntimeVal::Number(3f64), false);
-
-    match evaluate(ast, &mut scope) {
+    match evaluate(ast, scope) {
         Ok(v) => println!("{v}"),
         Err(err) => {
             eprintln!("{err}");

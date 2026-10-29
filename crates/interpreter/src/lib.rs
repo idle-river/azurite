@@ -31,6 +31,7 @@ fn eval_expr(expr: Expr, scope: &mut Scope) -> Result<RuntimeVal, InterpreterErr
         Expr::Identifier(ident) => scope
             .lookup_variable(&ident)
             .ok_or(InterpreterError::ValNotFound(ident)),
+        Expr::Reassignment { assigne, value } => eval_reassignment_expr(*assigne, *value, scope),
     }
 }
 
@@ -68,6 +69,30 @@ fn eval_binary_expr(
         BinaryOp::Modulo => lval % rval,
         BinaryOp::Exponent => lval.powf(rval),
     }))
+}
+
+fn eval_reassignment_expr(
+    left: Expr,
+    value: Expr,
+    scope: &mut Scope,
+) -> Result<RuntimeVal, InterpreterError> {
+    use scopes::error::ScopeError;
+
+    let right_val = eval_expr(value, scope)?;
+
+    // Evntually, we'll support object and class rewriting
+    let Expr::Identifier(ident) = left else {
+        return Err(InterpreterError::InvalidAssigne(left));
+    };
+
+    match scope.reassign_variable(&ident, right_val) {
+        Ok(_) => Ok(RuntimeVal::Null),
+        Err(e) => Err(match e {
+            ScopeError::VariableDoesNotExist(e) => InterpreterError::ValNotFound(e),
+            ScopeError::ReassigningConstant(e) => InterpreterError::ConstantReassign(e),
+            _ => unreachable!(),
+        }),
+    }
 }
 
 fn eval_variable_decl(

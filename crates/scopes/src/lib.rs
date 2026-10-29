@@ -1,4 +1,4 @@
-mod error;
+pub mod error;
 mod values;
 use std::collections::{HashMap, HashSet, hash_map::Entry};
 
@@ -75,6 +75,25 @@ impl Scope {
         match self.resolve(ident) {
             Some(scope) => Some(scope.variables.get(ident).unwrap().clone()),
             None => None,
+        }
+    }
+
+    pub fn reassign_variable(
+        &mut self,
+        ident: &str,
+        new_val: RuntimeVal,
+    ) -> Result<(), ScopeError> {
+        let is_constant = self.constants.contains(ident);
+
+        if is_constant {
+            Err(ScopeError::ReassigningConstant(ident.to_string()))
+        } else {
+            if let Some(val) = self.variables.get_mut(ident) {
+                *val = new_val;
+                Ok(())
+            } else {
+                Err(ScopeError::VariableDoesNotExist(ident.to_string()))
+            }
         }
     }
 }

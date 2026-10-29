@@ -107,7 +107,23 @@ impl Parser {
     }
 
     fn parse_expr(&mut self) -> Result<Expr, ParserError> {
-        self.parse_additive_expr()
+        self.parse_assignment_expr()
+    }
+
+    fn parse_assignment_expr(&mut self) -> Result<Expr, ParserError> {
+        let left = self.parse_additive_expr()?;
+
+        if self.peek() == Some(&Token::Equals) {
+            self.eat(); // advance past equals
+            let value = self.parse_assignment_expr()?;
+            self.expect(|tok| tok == &Token::Semicolon, "a semicolon")?;
+            Ok(Expr::Reassignment {
+                assigne: Box::new(left),
+                value: Box::new(value),
+            })
+        } else {
+            Ok(left)
+        }
     }
 
     fn parse_additive_expr(&mut self) -> Result<Expr, ParserError> {
