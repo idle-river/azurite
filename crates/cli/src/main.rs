@@ -1,4 +1,9 @@
-#[tokio::main]
-async fn main() {
-    println!("{}", starter_core::add(1, 2))
+use lexer::tokenize;
+
+fn main() {
+    let tokens = tokenize("let x = 45;");
+
+    for token in tokens {
+        println!("{token}")
+    }
 }
