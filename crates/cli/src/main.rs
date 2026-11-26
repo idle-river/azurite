@@ -1,4 +1,6 @@
-use lexer::tokenize;
+use std::io::{Write, stdin, stdout};
+
+use lexer::{Token, tokenize};
 
 fn main() {
     let args: Vec<_> = std::env::args().skip(1).collect();
@@ -22,6 +24,31 @@ fn main() {
             let tokens = tokenize(&source_code);
             for token in tokens {
                 println!("{token}");
+            }
+        }
+        "repl" => {
+            println!("Welcome to Azurite REPL!");
+            println!("Type 'exit' to quit.");
+
+            let mut input = String::new();
+            loop {
+                input.clear();
+                print!("> ");
+                stdout().flush().unwrap();
+                stdin().read_line(&mut input).unwrap();
+
+                let trimmed = input.trim();
+                if trimmed == "exit" {
+                    break;
+                }
+
+                let tokens = tokenize(trimmed);
+                for token in tokens {
+                    if token == Token::EOF {
+                        continue;
+                    }
+                    println!("{token}");
+                }
             }
         }
         _ => {

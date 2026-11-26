@@ -1,4 +1,6 @@
+#[derive(Debug, PartialEq)]
 pub enum Token {
+    CompOp(ComparisonOperator),
     BinaryOperator(char),
     Identifier(String),
     Number(String),
@@ -12,6 +14,16 @@ pub enum Token {
     Comma,
     EOF,
     Let,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum ComparisonOperator {
+    LessThan,
+    GreaterThan,
+    LessThanEq,
+    GreaterThanEq,
+    Equal,
+    NotEqual,
 }
 
 impl std::fmt::Display for Token {
@@ -30,6 +42,14 @@ impl std::fmt::Display for Token {
             Token::Number(num) => write!(f, "Number({num})"),
             Token::Let => write!(f, "let"),
             Token::Equals => write!(f, "="),
+            Token::CompOp(op) => match op {
+                ComparisonOperator::LessThan => write!(f, "<"),
+                ComparisonOperator::GreaterThan => write!(f, ">"),
+                ComparisonOperator::LessThanEq => write!(f, "<="),
+                ComparisonOperator::GreaterThanEq => write!(f, ">="),
+                ComparisonOperator::Equal => write!(f, "=="),
+                ComparisonOperator::NotEqual => write!(f, "!="),
+            },
         }
     }
 }
@@ -41,6 +61,19 @@ pub fn tokenize(src: &str) -> Vec<Token> {
 
     while let Some(tok) = src.next() {
         let token = match tok {
+            // Comments
+            '#' => {
+                while let Some(&next) = src.peek() {
+                    if next == '\n' {
+                        break;
+                    }
+                    src.next();
+                }
+                current_line += 1;
+                continue;
+            }
+
+            // Single Character Tokens
             '(' => Token::LeftParen,
             ')' => Token::RightParen,
             '{' => Token::LeftBrace,
@@ -48,8 +81,35 @@ pub fn tokenize(src: &str) -> Vec<Token> {
             ';' => Token::Semicolon,
             '.' => Token::Period,
             ',' => Token::Comma,
-            '=' => Token::Equals,
             '+' | '-' | '*' | '/' => Token::BinaryOperator(tok),
+
+            // Two Character Tokens
+            '=' => {
+                if Some(&'=') == src.peek() {
+                    src.next();
+                    Token::CompOp(ComparisonOperator::Equal)
+                } else {
+                    Token::Equals
+                }
+            }
+            '<' => {
+                if Some(&'=') == src.peek() {
+                    src.next();
+                    Token::CompOp(ComparisonOperator::LessThanEq)
+                } else {
+                    Token::BinaryOperator('<')
+                }
+            }
+            '>' => {
+                if Some(&'=') == src.peek() {
+                    src.next();
+                    Token::CompOp(ComparisonOperator::LessThanEq)
+                } else {
+                    Token::BinaryOperator('<')
+                }
+            }
+
+            // Multi Character Tokens
             c if c.is_ascii_digit() => {
                 let mut num = c.to_string();
                 while let Some(&next) = src.peek() {
